@@ -101,63 +101,6 @@ html,body{
   gap:12px;
 }
 
-.row{
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
-  align-items:center;
-}
-
-.pill{
-  padding:8px 10px;
-  background:var(--glass);
-  border:1px solid var(--stroke);
-  border-radius:999px;
-  font-size:12px;
-  color:var(--muted);
-}
-
-.control{
-  display:flex;
-  gap:8px;
-  align-items:center;
-  padding:8px 10px;
-  background:var(--glass);
-  border:1px solid var(--stroke);
-  border-radius:14px;
-}
-
-.control.wide{ flex: 1 1 260px; }
-
-.control span{
-  color:var(--muted);
-  font-size:12px;
-  white-space:nowrap;
-}
-
-select{
-  width:100%;
-  background:rgba(0,0,0,0.25);
-  color:var(--text);
-  border:1px solid var(--stroke);
-  border-radius:10px;
-  padding:6px 8px;
-}
-
-.toggle input{ transform:translateY(1px); }
-
-.btn{
-  padding:10px 12px;
-  border-radius:14px;
-  border:1px solid var(--stroke);
-  background:rgba(255,255,255,0.10);
-  color:var(--text);
-  font-weight:800;
-  letter-spacing:0.2px;
-}
-
-.btn:active{ transform:scale(0.99); }
-
 .confidence{
   padding:14px;
   background:var(--glass);
@@ -212,4 +155,10 @@ select{
   font-size:20px;
   font-weight:900;
   line-height:1.2;
+}
+
+.microHint{
+  color:var(--muted);
+  font-size:12px;
+  text-align:center;
 }

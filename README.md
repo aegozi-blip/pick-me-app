@@ -1,17 +1,15 @@
-# pick-me-app v5 (Web)
+# pick-me-app v6
 
-Fixes included:
-- Confidence Meter is always visible (single-column layout)
-- Speaking stops immediately whenever no faces are detected (hard cancel)
-- Voice picker dropdown + Test Voice button (choose a less-robotic voice if available on your device)
-- Speak cooldown remains 4500ms
-- Face boxes remain removed
-- Spicy-only compliments with solo/couple/group logic
+Changes requested:
+- Keep Confidence Meter, remove other UI boxes/metrics/checkboxes
+- Remove the phrase 'chef's kiss' from compliments
+- Keep spicy-only compliments and solo/couple/group logic
+- Speaking stops when no faces are detected
 
-## Deploy
-Upload these files to your repo root, replacing existing:
+Deploy:
+Upload these files to repo root (replace existing):
 - index.html
 - styles.css
 - app.js
 
-Do NOT change your existing /models folder.
+Leave /models unchanged.

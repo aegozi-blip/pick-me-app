@@ -1,30 +1,23 @@
-// pick-me-app v5
-// Fixes:
-// (A) Confidence meter always visible (UI simplified to single column)
-// (B) Speaking always stops when no faces (cancel speech every time)
-// (C) Add voice dropdown (lets you pick a less robotic voice if your device offers one)
+// pick-me-app v6
+// UI simplified:
+// - Keep Confidence Meter + compliment only (no extra pills/selects/checkboxes)
+// - Remove 'chef's kiss' phrase entirely
+// Logic kept:
+// - Solo/Couple/Group compliments
+// - Stop speaking when no faces
+// - Speak cooldown 4500ms
 
 const video = document.getElementById("video");
 const canvas = document.getElementById("overlay");
 const statusEl = document.getElementById("status");
-
-const facesMetric = document.getElementById("facesMetric");
-const smilesMetric = document.getElementById("smilesMetric");
-const lightMetric = document.getElementById("lightMetric");
-
-const styleSelect = document.getElementById("styleSelect");
-const speakToggle = document.getElementById("speakToggle");
-
-const voiceSelect = document.getElementById("voiceSelect");
-const testVoiceBtn = document.getElementById("testVoiceBtn");
 
 const complimentEl = document.getElementById("compliment");
 const confidenceValue = document.getElementById("confidenceValue");
 const barFill = document.getElementById("barFill");
 const confidenceHint = document.getElementById("confidenceHint");
 
-let voices = [];
 let selectedVoice = null;
+let voices = [];
 
 // Cadence
 let lastSpokenAt = 0;
@@ -48,7 +41,7 @@ function joinNicely(items){
   return `${items.slice(0,-1).join(", ")}, and ${items[items.length-1]}`;
 }
 
-// ---------- Voice handling ----------
+// ---------- Voice: pick best available automatically ----------
 function scoreVoice(v){
   const name = (v.name || "").toLowerCase();
   const lang = (v.lang || "").toLowerCase();
@@ -57,80 +50,40 @@ function scoreVoice(v){
   if(lang.startsWith("en")) s += 5;
   if(lang.includes("en-us")) s += 2;
 
-  // iOS/macOS names often include these
   if(name.includes("siri")) s += 6;
   if(name.includes("premium")) s += 6;
   if(name.includes("enhanced")) s += 5;
   if(name.includes("natural")) s += 5;
 
-  // common decent voices
   if(name.includes("samantha")) s += 4;
   if(name.includes("daniel")) s += 4;
   if(name.includes("karen")) s += 3;
   if(name.includes("tessa")) s += 3;
   if(name.includes("moira")) s += 3;
 
-  // penalize "robotic" / very basic
   if(name.includes("compact")) s -= 2;
   if(name.includes("espeak")) s -= 10;
-
-  // localService often sounds better on iOS
   if(v.localService) s += 1;
 
   return s;
 }
 
-function populateVoices(){
-  voices = (window.speechSynthesis?.getVoices?.() || []).slice();
-  if(!voices.length){
-    voiceSelect.innerHTML = '<option value="">No voices found</option>';
-    return;
-  }
+function initVoice(){
+  if(!window.speechSynthesis) return;
 
-  // Sort best-first
-  voices.sort((a,b)=>scoreVoice(b)-scoreVoice(a));
-
-  voiceSelect.innerHTML = "";
-  voices.forEach((v, idx)=>{
-    const opt = document.createElement("option");
-    opt.value = String(idx);
-    opt.textContent = `${v.name} (${v.lang})`;
-    voiceSelect.appendChild(opt);
-  });
-
-  // Default to best
-  voiceSelect.value = "0";
-  selectedVoice = voices[0];
-}
-
-function initVoices(){
-  if(!window.speechSynthesis){
-    voiceSelect.innerHTML = '<option value="">Speech not supported</option>';
-    return;
-  }
-
-  // Try immediately
-  populateVoices();
-
-  // Then again when voices load
-  window.speechSynthesis.onvoiceschanged = () => {
-    populateVoices();
+  const populate = () => {
+    voices = (window.speechSynthesis.getVoices() || []).slice();
+    if(!voices.length) return;
+    voices.sort((a,b)=>scoreVoice(b)-scoreVoice(a));
+    selectedVoice = voices[0] || null;
   };
 
-  voiceSelect.addEventListener("change", () => {
-    const idx = parseInt(voiceSelect.value, 10);
-    selectedVoice = (Number.isFinite(idx) && voices[idx]) ? voices[idx] : null;
-  });
-
-  testVoiceBtn.addEventListener("click", () => {
-    // user gesture helps iOS unlock audio
-    speak("Okay. This voice? Suspiciously powerful.");
-  });
+  populate();
+  window.speechSynthesis.onvoiceschanged = populate;
 }
 
 // ---------- Speech ----------
 function speak(text){
-  if(!speakToggle.checked) return;
   if(!window.speechSynthesis) return;
 
   const now = Date.now();
@@ -140,18 +93,13 @@ function speak(text){
   window.speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
   u.lang = "en-US";
-
-  // Slightly more human cadence
   u.rate = 1.02;
   u.pitch = 1.06;
-
   if(selectedVoice) u.voice = selectedVoice;
-
   window.speechSynthesis.speak(u);
 }
 
 function stopSpeakingHard(){
-  // Always stop immediately and prevent re-speak for a moment
   if(window.speechSynthesis) window.speechSynthesis.cancel();
   lastSpokenAt = Date.now();
 }
@@ -227,47 +175,32 @@ function updateConfidenceUI(confPct, signals){
 }
 
 // ---------- Compliments (spicy-only, non-explicit) ----------
-function makeCompliment(style, signals, transitions){
+function makeCompliment(signals, transitions){
   const { faceCount, smileCount, brightness, centered, close } = signals;
   if(faceCount === 0) return "";
 
-  const resolved = (style === "auto") ? "neutral" : style;
   const extraSpicyChance = 0.18;
 
   const notes = [];
   if(smileCount >= Math.max(1, Math.floor(faceCount/2))) notes.push("those smiles are causing problems");
   if(brightness > 0.62) notes.push("the lighting is doing you favors");
   if(brightness < 0.35) notes.push("moody lighting… bold choice, it works");
-  if(centered) notes.push("framing is chef’s kiss");
+  if(centered) notes.push("the framing is clean");
   if(faceCount === 2 && close) notes.push("the duo energy is dangerously synced");
   if(faceCount >= 3) notes.push("this group is clearly a headline");
 
   const noticed = notes.length ? ` I’m noticing ${joinNicely(notes)}.` : "";
 
-  const solo = {
-    neutral: [
-      "Okay. That vibe? Illegal.",
-      "You look like the reason plans change.",
-      "Main-character energy detected. Loudly.",
-      "This is not a normal amount of charm to have.",
-      "Respectfully… wow.",
-      "You look like you know secrets (and keep them well).",
-      "Your confidence just walked in before you did.",
-      "This camera is basically blushing."
-    ],
-    feminine: [
-      "You’re serving elegance with a side of trouble.",
-      "You look like you run the night *and* the group chat.",
-      "That glow is suspicious. What’s your secret?",
-      "You’re giving ‘don’t text your ex’ energy. Powerful."
-    ],
-    masculine: [
-      "You look sharp. Like ‘dangerously charming’ sharp.",
-      "That calm confidence is doing heavy lifting.",
-      "You look like you walk in and the playlist improves.",
-      "This is what ‘effortless’ looks like. Annoying. (In a good way.)"
-    ]
-  };
+  const solo = [
+    "Okay. That vibe? Illegal.",
+    "You look like the reason plans change.",
+    "Main-character energy detected. Loudly.",
+    "This is not a normal amount of charm to have.",
+    "Respectfully… wow.",
+    "You look like you know secrets (and keep them well).",
+    "Your confidence just walked in before you did.",
+    "This camera is basically blushing."
+  ];
 
   const soloExtra = [
     "If confidence was a crime, you’d be on a billboard.",
@@ -276,25 +209,13 @@ function makeCompliment(style, signals, transitions){
     "Someone’s going to misbehave because of this."
   ];
 
-  const couple = {
-    neutral: [
-      "Oh. It’s a duo now. This just got interesting.",
-      "You two look like a plot twist.",
-      "Double trouble, but make it stylish.",
-      "The chemistry is loud. The camera heard it.",
-      "This duo energy is absolutely not safe for boring people."
-    ],
-    feminine: [
-      "This duo is giving ‘we own the night’ energy.",
-      "Iconic. Slightly dangerous. Perfect.",
-      "You two look like sparkle with a strategy."
-    ],
-    masculine: [
-      "This duo looks like the fun just arrived.",
-      "You two have ‘we came, we saw, we vibed’ energy.",
-      "This is a ‘cause problems politely’ kind of duo."
-    ]
-  };
+  const couple = [
+    "Oh. It’s a duo now. This just got interesting.",
+    "You two look like a plot twist.",
+    "Double trouble, but make it stylish.",
+    "The chemistry is loud. The camera heard it.",
+    "This duo energy is absolutely not safe for boring people."
+  ];
 
   const coupleExtra = [
     "You two are one look away from starting a legend.",
@@ -338,19 +259,16 @@ function makeCompliment(style, signals, transitions){
 
   let base = "";
   if(faceCount === 1){
-    base = pick(solo[resolved] || solo.neutral);
-    if(Math.random() < extraSpicyChance) base = pick(soloExtra);
+    base = (Math.random() < extraSpicyChance) ? pick(soloExtra) : pick(solo);
     return base + smileTag + noticed;
   }
 
   if(faceCount === 2){
-    base = pick(couple[resolved] || couple.neutral);
-    if(Math.random() < extraSpicyChance) base = pick(coupleExtra);
+    base = (Math.random() < extraSpicyChance) ? pick(coupleExtra) : pick(couple);
     return base + smileTag + noticed;
   }
 
-  base = pick(group);
-  if(Math.random() < extraSpicyChance) base = pick(groupExtra);
+  base = (Math.random() < extraSpicyChance) ? pick(groupExtra) : pick(group);
   return base + smileTag + noticed;
 }
 
@@ -429,20 +347,11 @@ async function detectOnce(){
   return { faceCount: detections.length, smileCount, brightness, centered, close };
 }
 
-function updateMetrics(signals){
-  facesMetric.textContent = `Faces: ${signals.faceCount}`;
-  smilesMetric.textContent = `Smiles: ${signals.smileCount}`;
-  lightMetric.textContent = `Light: ${Math.round(signals.brightness * 100)}%`;
-}
-
 function onNoFaces(){
-  // Always stop speech immediately
   stopSpeakingHard();
   statusEl.textContent = "No face detected";
-
   complimentEl.textContent = "No face detected. Come back when you’re ready to be admired.";
   const zero = { faceCount:0, smileCount:0, brightness:0, centered:false, close:false };
-  updateMetrics(zero);
   updateConfidenceUI(0, zero);
 }
 
@@ -453,13 +362,10 @@ async function loop(){
   try{
     const signals = await detectOnce();
     clearOverlay();
-
     if(!signals){
       detectionInFlight = false;
       return;
     }
-
-    updateMetrics(signals);
 
     const conf = computeConfidence({
       faceCount: signals.faceCount,
@@ -485,7 +391,7 @@ async function loop(){
     };
 
     if(shouldGenerateCompliment(signals)){
-      const text = makeCompliment(styleSelect.value, signals, transitions);
+      const text = makeCompliment(signals, transitions);
       if(text){
         complimentEl.textContent = text;
         lastComplimentAt = Date.now();
@@ -508,7 +414,7 @@ async function boot(){
     return;
   }
 
-  initVoices();
+  initVoice();
 
   try{
     await loadModels();
@@ -518,7 +424,6 @@ async function boot(){
     confidenceHint.textContent = "Show your face to start.";
     statusEl.textContent = "Live";
 
-    // ~5 fps
     setInterval(loop, 200);
   } catch(e){
     console.error(e);

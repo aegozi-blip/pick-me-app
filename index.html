@@ -5,8 +5,6 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>pick-me-app</title>
   <link rel="stylesheet" href="styles.css" />
-
-  <!-- face-api.js -->
   <script defer src="https://unpkg.com/face-api.js@0.22.2/dist/face-api.min.js"></script>
   <script defer src="app.js"></script>
 </head>
@@ -25,41 +23,7 @@
     </section>
 
     <section class="panel">
-      <div class="row">
-        <div class="pill" id="facesMetric">Faces: 0</div>
-        <div class="pill" id="smilesMetric">Smiles: 0</div>
-        <div class="pill" id="lightMetric">Light: --</div>
-      </div>
-
-      <div class="row">
-        <label class="control">
-          <span>Style</span>
-          <select id="styleSelect">
-            <option value="auto">Auto</option>
-            <option value="neutral" selected>Neutral</option>
-            <option value="feminine">Feminine</option>
-            <option value="masculine">Masculine</option>
-          </select>
-        </label>
-
-        <label class="control toggle">
-          <span>Speak</span>
-          <input id="speakToggle" type="checkbox" checked />
-        </label>
-      </div>
-
-      <div class="row">
-        <label class="control wide">
-          <span>Voice</span>
-          <select id="voiceSelect">
-            <option value="">Loading voices…</option>
-          </select>
-        </label>
-
-        <button id="testVoiceBtn" class="btn" type="button">Test voice</button>
-      </div>
-
-      <div class="confidence" id="confidenceBox">
+      <div class="confidence">
         <div class="confidenceTop">
           <div class="confidenceLabel">Confidence Meter</div>
           <div class="confidenceValue" id="confidenceValue">0%</div>
@@ -72,6 +36,10 @@
 
       <div class="complimentCard">
         <div class="compliment" id="compliment">Show your face to start.</div>
+      </div>
+
+      <div class="microHint">
+        Tip: If audio feels too much, mute your phone.
       </div>
     </section>
   </main>
