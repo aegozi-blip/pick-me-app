@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>The Pick Me App (MVP)</title>
+  <link rel="stylesheet" href="styles.css" />
+
+  <!-- face-api.js -->
+  <script defer src="https://unpkg.com/face-api.js@0.22.2/dist/face-api.min.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo">PM</div>
+        <div>
+          <div class="title">The Pick Me App</div>
+          <div class="subtitle">Mirror + compliments (on-device)</div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <label class="control">
+          <span>Style</span>
+          <select id="styleSelect">
+            <option value="auto">Auto</option>
+            <option value="neutral" selected>Neutral</option>
+            <option value="feminine">Feminine</option>
+            <option value="masculine">Masculine</option>
+          </select>
+        </label>
+
+        <label class="control toggle">
+          <span>Speak</span>
+          <input id="speakToggle" type="checkbox" checked />
+        </label>
+      </div>
+    </header>
+
+    <main class="stage">
+      <!-- Video mirror -->
+      <video id="video" autoplay playsinline muted></video>
+
+      <!-- Overlay canvas (optional, used for analysis & can show boxes) -->
+      <canvas id="overlay"></canvas>
+
+      <!-- Compliment card -->
+      <div class="card">
+        <div class="metrics">
+          <span id="facesMetric">Faces: 0</span>
+          <span id="smilesMetric">Smiles: 0</span>
+          <span id="lightMetric">Light: --</span>
+        </div>
+        <div id="compliment" class="compliment">Initializing…</div>
+      </div>
+
+      <!-- Status -->
+      <div id="status" class="status">Loading models…</div>
+    </main>
+
+    <footer class="footer">
+      <div class="hint">
+        Tip: this works on HTTPS (GitHub Pages) or localhost. If camera doesn’t start, check site permissions.
+      </div>
+    </footer>
+  </div>
+</body>
+</html>
