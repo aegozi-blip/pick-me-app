@@ -1,50 +1,217 @@
+:root{
+  --bg:#0b0f19;
+  --text:#e9eefc;
+  --muted:rgba(233,238,252,0.7);
+  --glass:rgba(255,255,255,0.10);
+  --stroke:rgba(255,255,255,0.18);
+}
 
-body{
-margin:0;
-background:#0b0f19;
-font-family:Arial;
-color:white;
+*{box-sizing:border-box}
+
+html,body{
+  height:100%;
+  margin:0;
+  font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;
+  background:var(--bg);
+  color:var(--text);
 }
 
 .banner{
-text-align:center;
-padding:16px;
-font-size:22px;
-background:black;
-letter-spacing:1px;
+  padding:14px 16px;
+  border-bottom:1px solid var(--stroke);
+  background:rgba(0,0,0,0.35);
+  backdrop-filter:blur(10px);
+  text-align:center;
+}
+
+.bannerTitle{
+  font-weight:900;
+  letter-spacing:0.6px;
+  text-transform:lowercase;
+  font-size:22px;
+}
+
+.bannerSub{
+  margin-top:4px;
+  color:var(--muted);
+  font-size:12px;
+  letter-spacing:0.4px;
+}
+
+.layout{
+  display:grid;
+  grid-template-columns: 1.3fr 0.7fr;
+  gap:14px;
+  padding:14px;
+  height:calc(100% - 64px);
+}
+
+@media (max-width: 900px){
+  .layout{grid-template-columns: 1fr; height:auto}
 }
 
 .mirror{
-position:relative;
-height:70vh;
-margin:20px;
-border-radius:30px;
-overflow:hidden;
+  position:relative;
+  border-radius:26px;
+  overflow:hidden;
+  background:#000;
+  min-height:55vh;
 }
 
-video{
-width:100%;
-height:100%;
-object-fit:cover;
-transform:scaleX(-1);
+#video{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  transform:scaleX(-1);
+  background:#000;
+}
+
+#overlay{
+  position:absolute;
+  inset:0;
+  pointer-events:none;
 }
 
 .mirrorFrame{
-position:absolute;
-inset:0;
-border-radius:30px;
-box-shadow:
-inset 0 0 0 18px rgba(255,255,255,0.05),
-inset 0 0 50px rgba(0,0,0,0.5),
-0 20px 50px rgba(0,0,0,0.6);
-pointer-events:none;
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  border-radius:26px;
+  box-shadow:
+    inset 0 0 0 16px rgba(255,255,255,0.06),
+    inset 0 0 0 18px rgba(0,0,0,0.35),
+    inset 0 0 45px rgba(0,0,0,0.35),
+    0 18px 55px rgba(0,0,0,0.50);
+  background: radial-gradient(circle at 50% 35%,
+    rgba(255,255,255,0.06) 0%,
+    rgba(255,255,255,0.00) 45%,
+    rgba(0,0,0,0.25) 100%);
+}
+
+.status{
+  position:absolute;
+  top:12px;
+  left:12px;
+  padding:8px 10px;
+  background:rgba(0,0,0,0.35);
+  border:1px solid var(--stroke);
+  border-radius:12px;
+  color:var(--muted);
+  font-size:12px;
 }
 
 .panel{
-margin:20px;
-padding:25px;
-background:rgba(255,255,255,0.1);
-border-radius:20px;
-font-size:20px;
-text-align:center;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+.row{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.row2{
+  align-items:center;
+  justify-content:space-between;
+}
+
+.pill{
+  padding:8px 10px;
+  background:var(--glass);
+  border:1px solid var(--stroke);
+  border-radius:999px;
+  font-size:12px;
+  color:var(--muted);
+}
+
+.control{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  padding:8px 10px;
+  background:var(--glass);
+  border:1px solid var(--stroke);
+  border-radius:14px;
+}
+
+.control span{
+  color:var(--muted);
+  font-size:12px;
+}
+
+select{
+  background:rgba(0,0,0,0.25);
+  color:var(--text);
+  border:1px solid var(--stroke);
+  border-radius:10px;
+  padding:6px 8px;
+}
+
+.toggle input{
+  transform:translateY(1px);
+}
+
+.confidence{
+  padding:14px;
+  background:var(--glass);
+  border:1px solid var(--stroke);
+  border-radius:18px;
+}
+
+.confidenceTop{
+  display:flex;
+  justify-content:space-between;
+  align-items:baseline;
+  gap:10px;
+}
+
+.confidenceLabel{
+  font-weight:800;
+  letter-spacing:0.2px;
+}
+
+.confidenceValue{
+  color:var(--muted);
+  font-size:12px;
+}
+
+.bar{
+  margin-top:10px;
+  height:10px;
+  border-radius:999px;
+  background:rgba(0,0,0,0.35);
+  border:1px solid rgba(255,255,255,0.12);
+  overflow:hidden;
+}
+
+.barFill{
+  height:100%;
+  width:0%;
+  border-radius:999px;
+  background:linear-gradient(90deg, rgba(255,255,255,0.35), rgba(255,255,255,0.75));
+}
+
+.confidenceHint{
+  margin-top:10px;
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.3;
+}
+
+.complimentCard{
+  padding:16px;
+  background:var(--glass);
+  border:1px solid var(--stroke);
+  border-radius:18px;
+  min-height:130px;
+  display:flex;
+  align-items:center;
+}
+
+.compliment{
+  font-size:20px;
+  font-weight:850;
+  line-height:1.2;
 }

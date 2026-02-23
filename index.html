@@ -1,39 +1,69 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>pick-me-app</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>pick-me-app</title>
+  <link rel="stylesheet" href="styles.css" />
 
-<link rel="stylesheet" href="styles.css" />
-
-<script defer src="https://unpkg.com/face-api.js@0.22.2/dist/face-api.min.js"></script>
-<script defer src="app.js"></script>
-
+  <!-- face-api.js -->
+  <script defer src="https://unpkg.com/face-api.js@0.22.2/dist/face-api.min.js"></script>
+  <script defer src="app.js"></script>
 </head>
-
 <body>
+  <header class="banner">
+    <div class="bannerTitle">pick-me-app</div>
+    <div class="bannerSub">when you need a pick-me-up</div>
+  </header>
 
-<header class="banner">
-pick-me-app — when you need a pick-me-up
-</header>
+  <main class="layout">
+    <section class="mirror">
+      <video id="video" autoplay playsinline muted></video>
+      <canvas id="overlay"></canvas>
+      <div class="mirrorFrame" aria-hidden="true"></div>
 
-<div class="mirror">
+      <div id="status" class="status">Loading…</div>
+    </section>
 
-<video id="video" autoplay playsinline muted></video>
-<canvas id="overlay"></canvas>
+    <section class="panel">
+      <div class="row">
+        <div class="pill" id="facesMetric">Faces: 0</div>
+        <div class="pill" id="smilesMetric">Smiles: 0</div>
+        <div class="pill" id="lightMetric">Light: --</div>
+      </div>
 
-<div class="mirrorFrame"></div>
+      <div class="row row2">
+        <label class="control">
+          <span>Style</span>
+          <select id="styleSelect">
+            <option value="auto">Auto</option>
+            <option value="neutral" selected>Neutral</option>
+            <option value="feminine">Feminine</option>
+            <option value="masculine">Masculine</option>
+          </select>
+        </label>
 
-</div>
+        <label class="control toggle">
+          <span>Speak</span>
+          <input id="speakToggle" type="checkbox" checked />
+        </label>
+      </div>
 
-<div class="panel">
+      <div class="confidence">
+        <div class="confidenceTop">
+          <div class="confidenceLabel">Confidence Meter</div>
+          <div class="confidenceValue" id="confidenceValue">0%</div>
+        </div>
+        <div class="bar">
+          <div class="barFill" id="barFill" style="width:0%"></div>
+        </div>
+        <div class="confidenceHint" id="confidenceHint">Show your face to start.</div>
+      </div>
 
-<div id="compliment">
-Initializing...
-</div>
-
-</div>
-
+      <div class="complimentCard">
+        <div class="compliment" id="compliment">Show your face to start.</div>
+      </div>
+    </section>
+  </main>
 </body>
 </html>
