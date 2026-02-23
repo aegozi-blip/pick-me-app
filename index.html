@@ -16,12 +16,11 @@
     <div class="bannerSub">when you need a pick-me-up</div>
   </header>
 
-  <main class="layout">
+  <main class="container">
     <section class="mirror">
       <video id="video" autoplay playsinline muted></video>
       <canvas id="overlay"></canvas>
       <div class="mirrorFrame" aria-hidden="true"></div>
-
       <div id="status" class="status">Loading…</div>
     </section>
 
@@ -32,7 +31,7 @@
         <div class="pill" id="lightMetric">Light: --</div>
       </div>
 
-      <div class="row row2">
+      <div class="row">
         <label class="control">
           <span>Style</span>
           <select id="styleSelect">
@@ -49,7 +48,18 @@
         </label>
       </div>
 
-      <div class="confidence">
+      <div class="row">
+        <label class="control wide">
+          <span>Voice</span>
+          <select id="voiceSelect">
+            <option value="">Loading voices…</option>
+          </select>
+        </label>
+
+        <button id="testVoiceBtn" class="btn" type="button">Test voice</button>
+      </div>
+
+      <div class="confidence" id="confidenceBox">
         <div class="confidenceTop">
           <div class="confidenceLabel">Confidence Meter</div>
           <div class="confidenceValue" id="confidenceValue">0%</div>

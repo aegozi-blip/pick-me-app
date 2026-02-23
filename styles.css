@@ -38,16 +38,11 @@ html,body{
   letter-spacing:0.4px;
 }
 
-.layout{
-  display:grid;
-  grid-template-columns: 1.3fr 0.7fr;
+.container{
+  display:flex;
+  flex-direction:column;
   gap:14px;
   padding:14px;
-  height:calc(100% - 64px);
-}
-
-@media (max-width: 900px){
-  .layout{grid-template-columns: 1fr; height:auto}
 }
 
 .mirror{
@@ -55,7 +50,7 @@ html,body{
   border-radius:26px;
   overflow:hidden;
   background:#000;
-  min-height:55vh;
+  height:min(68vh, 620px);
 }
 
 #video{
@@ -110,11 +105,7 @@ html,body{
   display:flex;
   gap:10px;
   flex-wrap:wrap;
-}
-
-.row2{
   align-items:center;
-  justify-content:space-between;
 }
 
 .pill{
@@ -136,12 +127,16 @@ html,body{
   border-radius:14px;
 }
 
+.control.wide{ flex: 1 1 260px; }
+
 .control span{
   color:var(--muted);
   font-size:12px;
+  white-space:nowrap;
 }
 
 select{
+  width:100%;
   background:rgba(0,0,0,0.25);
   color:var(--text);
   border:1px solid var(--stroke);
@@ -149,9 +144,19 @@ select{
   padding:6px 8px;
 }
 
-.toggle input{
-  transform:translateY(1px);
+.toggle input{ transform:translateY(1px); }
+
+.btn{
+  padding:10px 12px;
+  border-radius:14px;
+  border:1px solid var(--stroke);
+  background:rgba(255,255,255,0.10);
+  color:var(--text);
+  font-weight:800;
+  letter-spacing:0.2px;
 }
+
+.btn:active{ transform:scale(0.99); }
 
 .confidence{
   padding:14px;
@@ -167,15 +172,8 @@ select{
   gap:10px;
 }
 
-.confidenceLabel{
-  font-weight:800;
-  letter-spacing:0.2px;
-}
-
-.confidenceValue{
-  color:var(--muted);
-  font-size:12px;
-}
+.confidenceLabel{ font-weight:900; letter-spacing:0.2px; }
+.confidenceValue{ color:var(--muted); font-size:12px; }
 
 .bar{
   margin-top:10px;
@@ -190,7 +188,7 @@ select{
   height:100%;
   width:0%;
   border-radius:999px;
-  background:linear-gradient(90deg, rgba(255,255,255,0.35), rgba(255,255,255,0.75));
+  background:linear-gradient(90deg, rgba(255,255,255,0.35), rgba(255,255,255,0.85));
 }
 
 .confidenceHint{
@@ -205,13 +203,13 @@ select{
   background:var(--glass);
   border:1px solid var(--stroke);
   border-radius:18px;
-  min-height:130px;
+  min-height:110px;
   display:flex;
   align-items:center;
 }
 
 .compliment{
   font-size:20px;
-  font-weight:850;
+  font-weight:900;
   line-height:1.2;
 }

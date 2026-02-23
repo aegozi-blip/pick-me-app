@@ -1,13 +1,8 @@
-// pick-me-app v4
-// - no face boxes
-// - spicy-only compliments (non-explicit)
-// - compliments react to smiles
-// - couples/group logic by face count
-// - stop compliments when no faces
-// - confidence meter UI
-// - better voice selection
-// - occasional "extra spicy" lines
-// - speak cooldown 4500ms
+// pick-me-app v5
+// Fixes:
+// (A) Confidence meter always visible (UI simplified to single column)
+// (B) Speaking always stops when no faces (cancel speech every time)
+// (C) Add voice dropdown (lets you pick a less robotic voice if your device offers one)
 
 const video = document.getElementById("video");
 const canvas = document.getElementById("overlay");
@@ -20,19 +15,22 @@ const lightMetric = document.getElementById("lightMetric");
 const styleSelect = document.getElementById("styleSelect");
 const speakToggle = document.getElementById("speakToggle");
 
+const voiceSelect = document.getElementById("voiceSelect");
+const testVoiceBtn = document.getElementById("testVoiceBtn");
+
 const complimentEl = document.getElementById("compliment");
 const confidenceValue = document.getElementById("confidenceValue");
 const barFill = document.getElementById("barFill");
 const confidenceHint = document.getElementById("confidenceHint");
 
-let preferredVoice = null;
+let voices = [];
+let selectedVoice = null;
 
-// Cadence / throttles
+// Cadence
 let lastSpokenAt = 0;
 const speakCooldownMs = 4500;
-
 let lastComplimentAt = 0;
-const complimentMinIntervalMs = 8000; // don't spam; still feels alive
+const complimentMinIntervalMs = 8000;
 
 // State
 let lastFaceCount = 0;
@@ -44,40 +42,90 @@ let modelsLoaded = false;
 // ---------- Helpers ----------
 function clamp01(x){ return Math.max(0, Math.min(1, x)); }
 function pick(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
-
 function joinNicely(items){
   if(items.length === 1) return items[0];
   if(items.length === 2) return `${items[0]} and ${items[1]}`;
   return `${items.slice(0,-1).join(", ")}, and ${items[items.length-1]}`;
 }
 
-// ---------- Voice selection (better voice) ----------
-function chooseVoice(){
-  const voices = window.speechSynthesis?.getVoices?.() || [];
-  if(!voices.length) return null;
+// ---------- Voice handling ----------
+function scoreVoice(v){
+  const name = (v.name || "").toLowerCase();
+  const lang = (v.lang || "").toLowerCase();
+  let s = 0;
 
-  // Prefer natural English voices if present (varies per device)
-  const preferred = [
-    /Samantha/i, /Daniel/i, /Karen/i, /Moira/i, /Tessa/i,
-    /Google US English/i, /Google UK English/i, /Microsoft/i
-  ];
+  if(lang.startsWith("en")) s += 5;
+  if(lang.includes("en-us")) s += 2;
 
-  for(const rx of preferred){
-    const v = voices.find(v => rx.test(v.name));
-    if(v) return v;
-  }
+  // iOS/macOS names often include these
+  if(name.includes("siri")) s += 6;
+  if(name.includes("premium")) s += 6;
+  if(name.includes("enhanced")) s += 5;
+  if(name.includes("natural")) s += 5;
 
-  // fallback: first English voice
-  const en = voices.find(v => (v.lang || "").toLowerCase().startsWith("en"));
-  return en || voices[0];
+  // common decent voices
+  if(name.includes("samantha")) s += 4;
+  if(name.includes("daniel")) s += 4;
+  if(name.includes("karen")) s += 3;
+  if(name.includes("tessa")) s += 3;
+  if(name.includes("moira")) s += 3;
+
+  // penalize "robotic" / very basic
+  if(name.includes("compact")) s -= 2;
+  if(name.includes("espeak")) s -= 10;
+
+  // localService often sounds better on iOS
+  if(v.localService) s += 1;
+
+  return s;
 }
 
-function initVoice(){
-  // Some browsers populate voices asynchronously
-  preferredVoice = chooseVoice();
+function populateVoices(){
+  voices = (window.speechSynthesis?.getVoices?.() || []).slice();
+  if(!voices.length){
+    voiceSelect.innerHTML = '<option value="">No voices found</option>';
+    return;
+  }
+
+  // Sort best-first
+  voices.sort((a,b)=>scoreVoice(b)-scoreVoice(a));
+
+  voiceSelect.innerHTML = "";
+  voices.forEach((v, idx)=>{
+    const opt = document.createElement("option");
+    opt.value = String(idx);
+    opt.textContent = `${v.name} (${v.lang})`;
+    voiceSelect.appendChild(opt);
+  });
+
+  // Default to best
+  voiceSelect.value = "0";
+  selectedVoice = voices[0];
+}
+
+function initVoices(){
+  if(!window.speechSynthesis){
+    voiceSelect.innerHTML = '<option value="">Speech not supported</option>';
+    return;
+  }
+
+  // Try immediately
+  populateVoices();
+
+  // Then again when voices load
   window.speechSynthesis.onvoiceschanged = () => {
-    preferredVoice = chooseVoice();
+    populateVoices();
   };
+
+  voiceSelect.addEventListener("change", () => {
+    const idx = parseInt(voiceSelect.value, 10);
+    selectedVoice = (Number.isFinite(idx) && voices[idx]) ? voices[idx] : null;
+  });
+
+  testVoiceBtn.addEventListener("click", () => {
+    // user gesture helps iOS unlock audio
+    speak("Okay. This voice? Suspiciously powerful.");
+  });
 }
 
 // ---------- Speech ----------
@@ -92,15 +140,24 @@ function speak(text){
   window.speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
   u.lang = "en-US";
-  u.rate = 1.0;
-  u.pitch = 1.02;
-  if(preferredVoice) u.voice = preferredVoice;
+
+  // Slightly more human cadence
+  u.rate = 1.02;
+  u.pitch = 1.06;
+
+  if(selectedVoice) u.voice = selectedVoice;
+
   window.speechSynthesis.speak(u);
 }
 
-// ---------- Brightness estimate (light) ----------
+function stopSpeakingHard(){
+  // Always stop immediately and prevent re-speak for a moment
+  if(window.speechSynthesis) window.speechSynthesis.cancel();
+  lastSpokenAt = Date.now();
+}
+
+// ---------- Brightness estimate ----------
 function estimateBrightness(){
-  // sample tiny frame for speed
   const w = 64, h = 64;
   const tmp = document.createElement("canvas");
   tmp.width = w; tmp.height = h;
@@ -142,7 +199,7 @@ function facesCloseTogether(normBoxes){
 // ---------- Confidence score ----------
 function computeConfidence({faceCount, smileCount, brightness, centered, close}){
   if(faceCount === 0) return 0;
-  let score = 0.38; // base
+  let score = 0.38;
   score += clamp01(brightness) * 0.25;
   score += centered ? 0.15 : 0;
   score += (smileCount > 0 ? 0.18 : 0);
@@ -169,7 +226,7 @@ function updateConfidenceUI(confPct, signals){
   confidenceHint.textContent = hints[0];
 }
 
-// ---------- Compliment sets (spicy-only, non-explicit) ----------
+// ---------- Compliments (spicy-only, non-explicit) ----------
 function makeCompliment(style, signals, transitions){
   const { faceCount, smileCount, brightness, centered, close } = signals;
   if(faceCount === 0) return "";
@@ -259,7 +316,7 @@ function makeCompliment(style, signals, transitions){
     "The vibe is coordinated. Suspiciously."
   ];
 
-  // Transitions: special one-liners when face count changes
+  // Transitions
   if(transitions.becameCouple){
     return pick([
       "Oh hello—now it’s a duo. Dangerous.",
@@ -275,7 +332,6 @@ function makeCompliment(style, signals, transitions){
     ]);
   }
 
-  // Smile-reactive punch-in
   const smileTag = (smileCount > 0)
     ? pick([" That smile is a menace.", " Smile detected—brace yourself.", " That smile? Weaponized."])
     : "";
@@ -298,7 +354,7 @@ function makeCompliment(style, signals, transitions){
   return base + smileTag + noticed;
 }
 
-// ---------- Compliment engine triggers ----------
+// ---------- Compliment triggers ----------
 function shouldGenerateCompliment(signals){
   const now = Date.now();
   const brightnessBucket = Math.round(signals.brightness * 10);
@@ -309,10 +365,7 @@ function shouldGenerateCompliment(signals){
 
   const timeElapsed = (now - lastComplimentAt) > complimentMinIntervalMs;
 
-  // Always respond quickly to face-count changes (1->2->3)
-  // Also respond when someone starts smiling
-  // Otherwise, refresh occasionally while faces are present
-  return faceCountChanged || smilesChanged || (timeElapsed && brightnessChanged) || (timeElapsed && signals.faceCount > 0);
+  return faceCountChanged || smilesChanged || (timeElapsed && (brightnessChanged || signals.faceCount > 0));
 }
 
 function updateState(signals){
@@ -343,7 +396,6 @@ async function setupCamera(){
   statusEl.textContent = "Live.";
 }
 
-// No face boxes: we intentionally DO NOT draw anything on the canvas.
 function clearOverlay(){
   const ctx = canvas.getContext("2d");
   ctx.clearRect(0,0,canvas.width,canvas.height);
@@ -354,10 +406,8 @@ async function detectOnce(){
   if(video.readyState < 2) return null;
 
   const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 });
-
   const detections = await faceapi.detectAllFaces(video, options).withFaceExpressions();
 
-  // signals
   const w = video.videoWidth || 1;
   const h = video.videoHeight || 1;
 
@@ -376,13 +426,7 @@ async function detectOnce(){
   const centered = facesCentered(normBoxes);
   const close = facesCloseTogether(normBoxes);
 
-  return {
-    faceCount: detections.length,
-    smileCount,
-    brightness,
-    centered,
-    close
-  };
+  return { faceCount: detections.length, smileCount, brightness, centered, close };
 }
 
 function updateMetrics(signals){
@@ -392,12 +436,14 @@ function updateMetrics(signals){
 }
 
 function onNoFaces(){
-  // stop compliments + speech
-  complimentEl.textContent = "No face detected. Come back when you’re ready to be admired.";
+  // Always stop speech immediately
+  stopSpeakingHard();
   statusEl.textContent = "No face detected";
-  updateMetrics({faceCount:0, smileCount:0, brightness:lastBrightnessBucket/10 || 0, centered:false, close:false});
-  updateConfidenceUI(0, {faceCount:0, smileCount:0, brightness:0, centered:false, close:false});
-  window.speechSynthesis?.cancel?.();
+
+  complimentEl.textContent = "No face detected. Come back when you’re ready to be admired.";
+  const zero = { faceCount:0, smileCount:0, brightness:0, centered:false, close:false };
+  updateMetrics(zero);
+  updateConfidenceUI(0, zero);
 }
 
 async function loop(){
@@ -425,7 +471,7 @@ async function loop(){
     updateConfidenceUI(conf, signals);
 
     if(signals.faceCount === 0){
-      if(lastFaceCount !== 0) onNoFaces();
+      onNoFaces();
       updateState(signals);
       detectionInFlight = false;
       return;
@@ -457,23 +503,22 @@ async function loop(){
 }
 
 async function boot(){
-  initVoice();
-
   if(!window.isSecureContext){
     statusEl.textContent = "Camera needs HTTPS (GitHub Pages) or localhost.";
     return;
   }
 
+  initVoices();
+
   try{
     await loadModels();
     await setupCamera();
 
-    // start state
     complimentEl.textContent = "Show your face to start.";
     confidenceHint.textContent = "Show your face to start.";
     statusEl.textContent = "Live";
 
-    // Run detection ~5 fps; good balance for battery
+    // ~5 fps
     setInterval(loop, 200);
   } catch(e){
     console.error(e);
