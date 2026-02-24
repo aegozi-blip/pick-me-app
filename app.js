@@ -244,23 +244,22 @@ function computeConfidence({faceCount, smileCount, brightness, centered, close})
 // ---------- Compliment repositories (module-level for performance) ----------
 const dariaRepo = {
   highConfidence: [
-    "Absolutely sparkling ✨ — that energy is pure glitter magic.",
+    "Absolutely sparkling  — that energy is pure glitter magic.",
     "You are radiating today.",
     "Honestly? Radiant. The kind of radiant that starts trends.",
     "Pure sparkle energy. The frame literally can't handle it.",
-    "That glow is outrageous right now. Shimmering from here. ✨",
+    "That glow is outrageous right now. Shimmering from here. ",
     "Everything about this. Flawless.",
   ],
   smile: [
     "Your smile is throwing glitter into the universe right now.",
     "That smile? Weaponised glitter. The best kind.",
-    "A smile like that deserves a confetti cannon. ✨",
     "You smiled and the room got shinier. That's just a fact.",
-    "You have the sexiest smile ✨",
+    "You have the sexiest smile.",
   ],
   centered: [
     "You know how to own a frame. Glitter would just be extra.",
-    "You were made for this shot. ✨",
+    "You were made for this shot. ",
     "Centred and glowing.",
     "Nailed it.",
   ],
@@ -291,9 +290,8 @@ const dariaRepo = {
   generic: [
     "Okay. Pure sparkle. The frame literally can't handle it.",
     "You arrived and the glitter followed. Obviously.",
-    "Main character. Confetti cannon optional but assumed. ✨",
-    "Mysterious, moody, and somehow still shimmering. Very you.",
-    "Shimmer detected. The vibe is immaculate.",
+    "Mysterious, sexy, and somehow still shimmering. Very you.",
+    "Your vibe is immaculate.",
     "Casual glitter aura. Not everyone has it. You do.",
   ],
 };
