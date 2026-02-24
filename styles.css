@@ -1,164 +1,32 @@
-:root{
-  --bg:#0b0f19;
-  --text:#e9eefc;
-  --muted:rgba(233,238,252,0.7);
-  --glass:rgba(255,255,255,0.10);
-  --stroke:rgba(255,255,255,0.18);
+.confidence-meter {
+    /* Style for confidence meter container */
 }
 
-*{box-sizing:border-box}
-
-html,body{
-  height:100%;
-  margin:0;
-  font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;
-  background:var(--bg);
-  color:var(--text);
+@keyframes pulse-glow {
+    0% {
+        box-shadow: 0 0 5px #ff00ff;
+    }
+    50% {
+        box-shadow: 0 0 20px #ff00ff;
+    }
+    100% {
+        box-shadow: 0 0 5px #ff00ff;
+    }
 }
 
-.banner{
-  padding:14px 16px;
-  border-bottom:1px solid var(--stroke);
-  background:rgba(0,0,0,0.35);
-  backdrop-filter:blur(10px);
-  text-align:center;
+@keyframes bar-fill-high {
+    0% {
+        height: 0%;
+    }
+    100% {
+        height: 100%;
+    }
 }
 
-.bannerTitle{
-  font-weight:900;
-  letter-spacing:0.6px;
-  text-transform:lowercase;
-  font-size:22px;
+.milestone {
+    /* Style for milestone effects */
 }
 
-.bannerSub{
-  margin-top:4px;
-  color:var(--muted);
-  font-size:12px;
-  letter-spacing:0.4px;
-}
-
-.container{
-  display:flex;
-  flex-direction:column;
-  gap:14px;
-  padding:14px;
-}
-
-.mirror{
-  position:relative;
-  border-radius:26px;
-  overflow:hidden;
-  background:#000;
-  height:min(68vh, 620px);
-}
-
-#video{
-  width:100%;
-  height:100%;
-  object-fit:cover;
-  transform:scaleX(-1);
-  background:#000;
-}
-
-#overlay{
-  position:absolute;
-  inset:0;
-  pointer-events:none;
-}
-
-.mirrorFrame{
-  position:absolute;
-  inset:0;
-  pointer-events:none;
-  border-radius:26px;
-  box-shadow:
-    inset 0 0 0 16px rgba(255,255,255,0.06),
-    inset 0 0 0 18px rgba(0,0,0,0.35),
-    inset 0 0 45px rgba(0,0,0,0.35),
-    0 18px 55px rgba(0,0,0,0.50);
-  background: radial-gradient(circle at 50% 35%,
-    rgba(255,255,255,0.06) 0%,
-    rgba(255,255,255,0.00) 45%,
-    rgba(0,0,0,0.25) 100%);
-}
-
-.status{
-  position:absolute;
-  top:12px;
-  left:12px;
-  padding:8px 10px;
-  background:rgba(0,0,0,0.35);
-  border:1px solid var(--stroke);
-  border-radius:12px;
-  color:var(--muted);
-  font-size:12px;
-}
-
-.panel{
-  display:flex;
-  flex-direction:column;
-  gap:12px;
-}
-
-.confidence{
-  padding:14px;
-  background:var(--glass);
-  border:1px solid var(--stroke);
-  border-radius:18px;
-}
-
-.confidenceTop{
-  display:flex;
-  justify-content:space-between;
-  align-items:baseline;
-  gap:10px;
-}
-
-.confidenceLabel{ font-weight:900; letter-spacing:0.2px; }
-.confidenceValue{ color:var(--muted); font-size:12px; }
-
-.bar{
-  margin-top:10px;
-  height:10px;
-  border-radius:999px;
-  background:rgba(0,0,0,0.35);
-  border:1px solid rgba(255,255,255,0.12);
-  overflow:hidden;
-}
-
-.barFill{
-  height:100%;
-  width:0%;
-  border-radius:999px;
-  background:linear-gradient(90deg, rgba(255,255,255,0.35), rgba(255,255,255,0.85));
-}
-
-.confidenceHint{
-  margin-top:10px;
-  color:var(--muted);
-  font-size:12px;
-  line-height:1.3;
-}
-
-.complimentCard{
-  padding:16px;
-  background:var(--glass);
-  border:1px solid var(--stroke);
-  border-radius:18px;
-  min-height:110px;
-  display:flex;
-  align-items:center;
-}
-
-.compliment{
-  font-size:20px;
-  font-weight:900;
-  line-height:1.2;
-}
-
-.microHint{
-  color:var(--muted);
-  font-size:12px;
-  text-align:center;
+.milestone.active {
+    animation: pulse-glow 1s infinite;
 }
