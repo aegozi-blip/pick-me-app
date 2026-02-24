@@ -325,6 +325,7 @@ const dariaRepo = {
     "Collectively radiant. The glitter doesn't know where to start. ✨",
   ],
   generic: [
+    "You are perfect and I love you.",
     "Okay. Pure sparkle. The frame literally can't handle it.",
     "You arrived and the glitter followed. Obviously.",
     "Mysterious, sexy, and somehow still shimmering. Very you.",
@@ -343,7 +344,7 @@ const danRepo = {
     "Gin and tonic energy. Perfection. 🍹",
     "I'm taking you out for Wednesday drinks! 🍹",
     "Looking this good at the bar should come with a free round. No doubt.",
-    "That look. We are going to find ourselves on a balcoy at 5 in the morning again. 🍸",
+    "That look. We are going to find ourselves on a balcony at 5 in the morning again. 🍸",
     "That energy is what Wednesday drinks was invented for. Iconic. 🍹",
   ],
   smile: [
