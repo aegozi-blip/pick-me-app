@@ -1,32 +1,35 @@
 .confidence-meter {
-    /* Style for confidence meter container */
+  transition: all 0.5s ease;
+  position: relative;
+}
+
+.confidence-meter.high-confidence {
+  background: linear-gradient(135deg, #0d6efd, #007bff);
+  animation: pulse-glow 1.5s infinite;
 }
 
 @keyframes pulse-glow {
-    0% {
-        box-shadow: 0 0 5px #ff00ff;
-    }
-    50% {
-        box-shadow: 0 0 20px #ff00ff;
-    }
-    100% {
-        box-shadow: 0 0 5px #ff00ff;
-    }
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(0, 110, 255, 0);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(0, 110, 255, 1);
+  }
 }
 
-@keyframes bar-fill-high {
-    0% {
-        height: 0%;
-    }
-    100% {
-        height: 100%;
-    }
+.barFill {
+  transition: width 0.5s ease;
 }
 
 .milestone {
-    /* Style for milestone effects */
+  animation: milestone-animation 0.5s ease-in-out;
 }
 
-.milestone.active {
-    animation: pulse-glow 1s infinite;
+@keyframes milestone-animation {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.05);
+  }
 }
