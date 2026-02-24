@@ -373,6 +373,13 @@ html,body{
 .g7 { top: 93%; left: 15%; animation-delay: 1.8s; }
 .g8 { top: 93%; left: 80%; animation-delay: 2.1s; }
 
+/* Laptop / medium-height screens — keep More Compliments button above the fold */
+@media (max-height: 900px) and (min-width: 601px) {
+  .mirror{
+    height:min(52vh, 480px);
+  }
+}
+
 /* Mobile responsive adjustments */
 @media (max-width: 600px) {
   .container{

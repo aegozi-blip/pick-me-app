@@ -49,6 +49,9 @@ let lastSignals = null; // cache last detection result for button handler
 // ---------- Helpers ----------
 function clamp01(x){ return Math.max(0, Math.min(1, x)); }
 function pick(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
+function stripEmojis(text){
+  return text.replace(/[\u{1F300}-\u{1FAFF}]|[\u{2600}-\u{27BF}]|[\u{1F1E0}-\u{1F1FF}]|\uFE0F/gu, "").trim();
+}
 function joinNicely(items){
   if(items.length === 1) return items[0];
   if(items.length === 2) return `${items[0]} and ${items[1]}`;
@@ -61,6 +64,8 @@ function initVoiceSelector(){
   if(!sel) return;
   sel.addEventListener("change", () => {
     currentVoiceMode = sel.value;
+    if(window.speechSynthesis) window.speechSynthesis.cancel();
+    lastSpokenAt = 0; // reset cooldown so next compliment speaks immediately
   });
 }
 
@@ -137,8 +142,9 @@ function initVoice(){
   if(!window.speechSynthesis) return;
 
   const populate = () => {
-    voices = (window.speechSynthesis.getVoices() || []).slice();
-    if(!voices.length) return;
+    const v = (window.speechSynthesis.getVoices() || []).slice();
+    if(!v.length) return;
+    voices = v;
     const sorted = voices.slice().sort((a,b) => scoreVoice(b) - scoreVoice(a));
     selectedVoice = sorted[0] || null;
     const maleSorted = voices.slice().sort((a,b) => scoreMaleVoice(b) - scoreMaleVoice(a));
@@ -149,6 +155,9 @@ function initVoice(){
 
   populate();
   window.speechSynthesis.onvoiceschanged = populate;
+  // Retry for browsers where onvoiceschanged fires late or unreliably (e.g. mobile Safari)
+  setTimeout(populate, 500);
+  setTimeout(populate, 1500);
 }
 
 // ---------- Speech ----------
@@ -160,7 +169,7 @@ function speak(text){
   lastSpokenAt = now;
 
   window.speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(text);
+  const u = new SpeechSynthesisUtterance(stripEmojis(text));
   u.lang = "en-US";
   u.rate = 1.02;
   u.pitch = 1.06;
@@ -173,7 +182,7 @@ function speakForced(text){
   if(!window.speechSynthesis) return;
   lastSpokenAt = Date.now();
   window.speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(text);
+  const u = new SpeechSynthesisUtterance(stripEmojis(text));
   u.lang = "en-US";
   u.rate = 1.02;
   u.pitch = 1.06;
