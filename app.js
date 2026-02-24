@@ -47,6 +47,7 @@ let loopInterval = null;
 let lastSignals = null; // cache last detection result for button handler
 let battleInProgress = false;
 let battleStopRequested = false;
+let isActionInProgress = false; // prevents face detection from interrupting speech/actions
 
 // Battle timing constants
 const battleTurnDelayMs = 500;
@@ -63,14 +64,25 @@ function joinNicely(items){
 }
 
 // ---------- Voice mode selector ----------
+function selectVoiceByMode(mode){
+  if(!window.speechSynthesis) return;
+  if(!selectedMaleVoice || !selectedFemaleVoice){
+    if(!voices.length) voices = (window.speechSynthesis.getVoices() || []).slice();
+    if(voices.length){
+      selectedMaleVoice = voices.slice().sort((a,b) => scoreMaleVoice(b) - scoreMaleVoice(a))[0] || null;
+      selectedFemaleVoice = voices.slice().sort((a,b) => scoreFemaleVoice(b) - scoreFemaleVoice(a))[0] || null;
+    }
+  }
+  selectedVoice = mode === "dan" ? selectedMaleVoice : selectedFemaleVoice;
+}
+
 function initVoiceSelector(){
   const sel = document.getElementById("voiceSelector");
   if(!sel) return;
   sel.addEventListener("change", () => {
     if(window.speechSynthesis) window.speechSynthesis.cancel();
     currentVoiceMode = sel.value;
-    console.log("[pick-me] voice mode →", currentVoiceMode,
-      "| male:", selectedMaleVoice?.name, "| female:", selectedFemaleVoice?.name);
+    selectVoiceByMode(currentVoiceMode);
   });
 }
 
@@ -176,6 +188,9 @@ function speak(text){
   u.pitch = 1.06;
   const voice = currentVoiceMode === "dan" ? selectedMaleVoice : selectedFemaleVoice;
   if(voice) u.voice = voice;
+  isActionInProgress = true;
+  u.onend = () => { if(!battleInProgress) isActionInProgress = false; };
+  u.onerror = () => { if(!battleInProgress) isActionInProgress = false; };
   window.speechSynthesis.speak(u);
 }
 
@@ -189,6 +204,9 @@ function speakForced(text){
   u.pitch = 1.06;
   const voice = currentVoiceMode === "dan" ? selectedMaleVoice : selectedFemaleVoice;
   if(voice) u.voice = voice;
+  isActionInProgress = true;
+  u.onend = () => { if(!battleInProgress) isActionInProgress = false; };
+  u.onerror = () => { if(!battleInProgress) isActionInProgress = false; };
   window.speechSynthesis.speak(u);
 }
 
@@ -803,6 +821,7 @@ async function runBattle(){
 
   battleInProgress = true;
   battleStopRequested = false;
+  isActionInProgress = true;
   battlePanel.style.display = "block";
   battleBtn.style.display = "none";
   battleResult.style.display = "none";
@@ -854,6 +873,7 @@ async function runBattle(){
   }
 
   battleInProgress = false;
+  isActionInProgress = false;
   if(lastSignals && lastSignals.faceCount > 0 && firstComplimentShown){
     battleBtn.style.display = "block";
   }
@@ -870,6 +890,7 @@ function initBattleBtn(){
 
   stopBtn.addEventListener("click", () => {
     battleStopRequested = true;
+    isActionInProgress = false;
     if(window.speechSynthesis) window.speechSynthesis.cancel();
     const battlePanel = document.getElementById("battlePanel");
     if(battlePanel) battlePanel.style.display = "none";
@@ -1016,6 +1037,7 @@ function onNoFaces(){
 
 async function loop(){
   if(detectionInFlight) return;
+  if(isActionInProgress) return;
   detectionInFlight = true;
 
   try{

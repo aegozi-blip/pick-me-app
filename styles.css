@@ -328,7 +328,7 @@ html,body{
 .moreComplimentsBtn{
   position:fixed;
   bottom:20px;
-  right:20px;
+  left:20px;
   padding:12px 18px;
   background:rgba(11,15,25,0.88);
   border:1px solid var(--stroke);
@@ -356,7 +356,7 @@ html,body{
 .battleBtn{
   position:fixed;
   bottom:72px;
-  right:20px;
+  left:20px;
   padding:12px 18px;
   background:rgba(11,15,25,0.88);
   border:1px solid var(--stroke);
