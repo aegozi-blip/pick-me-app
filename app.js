@@ -306,12 +306,14 @@ const dariaSoloPool = [
 const danRepo = {
   highConfidence: [
     "Gin and tonic energy. Perfection. 🍹",
+    "I'm taking you out for Wednesday drinks! 🍹",
     "Looking this good at the bar should come with a free round. No doubt.",
     "That look. We are going to find ourselves on a balcoy at 5 in the morning again. 🍸",
     "That energy is what Wednesday drinks was invented for. Iconic. 🍹",
   ],
   smile: [
     "That smile says the G&T hit exactly right. 🍹",
+    "Looking better than the perfect G&T!", 
     "Smile like that? Someone definitely ordered the good gin.",
     "You smiled and the place just got better. That's just how it works.",
   ],
