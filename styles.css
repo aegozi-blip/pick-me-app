@@ -1,55 +1,36 @@
-.container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
-  background-color: #f0f0f0;
+.black-mirror {
+    border: 5px solid black;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
 }
 
-.confidence-meter {
-  position: relative;
-  width: 200px;
-  height: 30px;
-  border-radius: 15px;
-  background-color: #ddd;
-  overflow: hidden;
-}
-
-.bar {
-  position: absolute;
-  height: 100%;
-  border-radius: 15px;
-  background-color: #4caf50;
-  animation: bar-fill-high 1s forwards;
-}
-
-@keyframes pulse-glow {
-  0%, 100% {
-    box-shadow: 0 0 10px rgba(76, 175, 80, 0.7);
-  }
-  50% {
-    box-shadow: 0 0 20px rgba(76, 175, 80, 1);
-  }
-}
-
-@keyframes bar-fill-high {
-  from {
-    width: 0;
-  }
-  to {
+.confidence-bar {
     width: 100%;
-  }
+    height: 20px;
+    background-color: #e0e0e0;
+    border-radius: 5px;
+    overflow: hidden;
 }
 
-@keyframes bar-milestone {
-  0% {
+.confidence-bar .confidence-level {
+    height: 100%;
     background-color: #4caf50;
-  }
-  50% {
-    background-color: #ffeb3b;
-  }
-  100% {
-    background-color: #f44336;
-  }
+    transition: width 0.5s;
+}
+
+.compliment-card {
+    background-color: #ffffff;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    animation: fadeIn 1s;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
 }
