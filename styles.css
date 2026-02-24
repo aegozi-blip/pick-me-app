@@ -66,6 +66,85 @@ html,body{
   border-color:rgba(255,255,255,0.4);
 }
 
+/* ===== MICROPHONE BUTTON ===== */
+
+.micBtn{
+  margin-left:8px;
+  background:rgba(255,255,255,0.08);
+  border:1px solid var(--stroke);
+  border-radius:10px;
+  color:var(--text);
+  font-size:16px;
+  padding:6px 10px;
+  cursor:pointer;
+  outline:none;
+  transition:background 0.2s, border-color 0.2s;
+  line-height:1;
+}
+
+.micBtn:hover{
+  background:rgba(255,255,255,0.14);
+}
+
+.micBtn.recording{
+  background:rgba(220,60,60,0.35);
+  border-color:rgba(255,80,80,0.7);
+  animation:mic-pulse 1s ease-in-out infinite;
+}
+
+@keyframes mic-pulse{
+  0%,100%{ box-shadow:0 0 0 0 rgba(220,60,60,0.4); }
+  50%    { box-shadow:0 0 0 6px rgba(220,60,60,0); }
+}
+
+/* ===== RESPONSE AREA ===== */
+
+.responseArea{
+  padding:14px;
+  background:var(--glass);
+  border:1px solid var(--stroke);
+  border-radius:18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+.recordingIndicator{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  color:rgba(255,100,100,0.9);
+  font-size:13px;
+  font-weight:600;
+}
+
+.recordingDot{
+  display:inline-block;
+  width:10px;
+  height:10px;
+  border-radius:50%;
+  background:rgba(220,60,60,0.9);
+  animation:dot-blink 0.9s ease-in-out infinite;
+}
+
+@keyframes dot-blink{
+  0%,100%{ opacity:1; }
+  50%    { opacity:0.2; }
+}
+
+.userInputDisplay{
+  color:var(--muted);
+  font-size:13px;
+  font-style:italic;
+  line-height:1.3;
+}
+
+.responseDisplay{
+  font-size:16px;
+  font-weight:700;
+  line-height:1.3;
+}
+
 .container{
   display:flex;
   flex-direction:column;
@@ -302,6 +381,15 @@ html,body{
 
   .compliment{
     font-size:16px;
+  }
+
+  .micBtn{
+    font-size:14px;
+    padding:5px 8px;
+  }
+
+  .responseDisplay{
+    font-size:14px;
   }
 
   .confidenceLabel,
