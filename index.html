@@ -10,15 +10,32 @@
 </head>
 <body>
   <header class="banner">
-    <div class="bannerTitle">pick-me-app</div>
-    <div class="bannerSub">when you need a pick-me-up</div>
+    <div class="bannerLeft">
+      <div class="bannerTitle">pick-me-app</div>
+      <div class="bannerSub">when you need a pick-me-up</div>
+    </div>
+    <div class="bannerRight">
+      <select id="voiceSelector" class="voiceSelector" aria-label="Voice mode">
+        <option value="daria">✨ Daria</option>
+        <option value="dan">🍹 Dan</option>
+      </select>
+    </div>
   </header>
 
   <main class="container">
     <section class="mirror">
       <video id="video" autoplay playsinline muted></video>
       <canvas id="overlay"></canvas>
-      <div class="mirrorFrame" aria-hidden="true"></div>
+      <div class="mirrorFrame" aria-hidden="true">
+        <span class="glitter g1"></span>
+        <span class="glitter g2"></span>
+        <span class="glitter g3"></span>
+        <span class="glitter g4"></span>
+        <span class="glitter g5"></span>
+        <span class="glitter g6"></span>
+        <span class="glitter g7"></span>
+        <span class="glitter g8"></span>
+      </div>
       <div id="status" class="status">Loading…</div>
     </section>
 
