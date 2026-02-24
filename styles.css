@@ -326,24 +326,139 @@ html,body{
 /* ===== MORE COMPLIMENTS BUTTON ===== */
 
 .moreComplimentsBtn{
-  display:block;
-  width:100%;
-  padding:12px 16px;
-  background:var(--glass);
+  position:fixed;
+  bottom:20px;
+  right:20px;
+  padding:12px 18px;
+  background:rgba(11,15,25,0.88);
   border:1px solid var(--stroke);
-  border-radius:14px;
+  border-radius:50px;
   color:var(--text);
-  font-size:15px;
+  font-size:14px;
   font-weight:700;
   cursor:pointer;
   text-align:center;
   transition:background 0.2s, border-color 0.2s;
   letter-spacing:0.3px;
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  box-shadow:0 4px 20px rgba(0,0,0,0.45);
+  z-index:100;
 }
 
 .moreComplimentsBtn:hover{
   background:rgba(255,255,255,0.15);
   border-color:rgba(255,255,255,0.35);
+}
+
+/* ===== BATTLE BUTTON ===== */
+
+.battleBtn{
+  position:fixed;
+  bottom:72px;
+  right:20px;
+  padding:12px 18px;
+  background:rgba(11,15,25,0.88);
+  border:1px solid var(--stroke);
+  border-radius:50px;
+  color:var(--text);
+  font-size:14px;
+  font-weight:700;
+  cursor:pointer;
+  text-align:center;
+  transition:background 0.2s, border-color 0.2s;
+  letter-spacing:0.3px;
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  box-shadow:0 4px 20px rgba(0,0,0,0.45);
+  z-index:100;
+}
+
+.battleBtn:hover{
+  background:rgba(255,255,255,0.15);
+  border-color:rgba(255,255,255,0.35);
+}
+
+/* ===== BATTLE PANEL ===== */
+
+.battlePanel{
+  padding:16px;
+  background:var(--glass);
+  border:1px solid var(--stroke);
+  border-radius:18px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+.battleHeader{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.battleRound{
+  font-weight:900;
+  font-size:13px;
+  letter-spacing:0.3px;
+  color:var(--muted);
+}
+
+.stopBattleBtn{
+  background:rgba(220,60,60,0.2);
+  border:1px solid rgba(220,60,60,0.4);
+  border-radius:8px;
+  color:var(--text);
+  font-size:12px;
+  font-weight:700;
+  padding:5px 10px;
+  cursor:pointer;
+  transition:background 0.2s;
+}
+
+.stopBattleBtn:hover{
+  background:rgba(220,60,60,0.4);
+}
+
+.battleSlots{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+
+.battleSlot{
+  padding:12px;
+  background:rgba(0,0,0,0.25);
+  border:1px solid var(--stroke);
+  border-radius:14px;
+  transition:border-color 0.3s, box-shadow 0.3s;
+}
+
+.battleSlot.active{
+  border-color:rgba(255,255,255,0.5);
+  box-shadow:0 0 14px rgba(255,255,255,0.12);
+}
+
+.battleCharLabel{
+  font-size:12px;
+  font-weight:900;
+  color:var(--muted);
+  margin-bottom:6px;
+  letter-spacing:0.3px;
+}
+
+.battleCompliment{
+  font-size:13px;
+  font-weight:700;
+  line-height:1.3;
+  word-wrap:break-word;
+}
+
+.battleResult{
+  font-size:16px;
+  font-weight:900;
+  text-align:center;
+  padding:8px 0;
 }
 
 /* ===== GLITTER ANIMATION ===== */

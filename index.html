@@ -56,7 +56,23 @@
         <div class="compliment" id="compliment">Show your face to start.</div>
       </div>
 
-      <button id="moreComplimentsBtn" class="moreComplimentsBtn" style="display:none" aria-label="Get more compliments">More Compliments ✨</button>
+      <div id="battlePanel" class="battlePanel" style="display:none">
+        <div class="battleHeader">
+          <span id="battleRound" class="battleRound">Round 1 of 3</span>
+          <button id="stopBattleBtn" class="stopBattleBtn" aria-label="Stop battle">Stop ✕</button>
+        </div>
+        <div class="battleSlots">
+          <div class="battleSlot" id="dariaBattleSlot">
+            <div class="battleCharLabel">✨ Daria</div>
+            <div class="battleCompliment" id="dariaBattleText">…</div>
+          </div>
+          <div class="battleSlot" id="danBattleSlot">
+            <div class="battleCharLabel">🍹 Dan</div>
+            <div class="battleCompliment" id="danBattleText">…</div>
+          </div>
+        </div>
+        <div id="battleResult" class="battleResult" style="display:none"></div>
+      </div>
 
       <div class="microHint">
         Tip: If audio feels too much, mute your phone.
@@ -71,5 +87,8 @@
       </div>
     </section>
   </main>
+
+  <button id="battleBtn" class="battleBtn" style="display:none" aria-label="Start Compliment Battle">Compliment Battle 🎭</button>
+  <button id="moreComplimentsBtn" class="moreComplimentsBtn" style="display:none" aria-label="Get more compliments">More Compliments ✨</button>
 </body>
 </html>
