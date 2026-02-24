@@ -194,26 +194,24 @@ function makeComplimentDaria(signals, transitions){
   const repo = {
     highConfidence: [
       "Absolutely sparkling ✨ — that energy is pure glitter magic.",
-      "You are radiating today. The shimmer is completely real.",
+      "You are radiating today.",
       "Honestly? Radiant. The kind of radiant that starts trends.",
       "Pure sparkle energy. The frame literally can't handle it.",
       "That glow is outrageous right now. Shimmering from here. ✨",
-      "Everything about this is giving main-character glitter. Flawless.",
+      "Everything about this. Flawless.",
     ],
     smile: [
       "Your smile is throwing glitter into the universe right now.",
       "That smile? Weaponised glitter. The best kind.",
       "A smile like that deserves a confetti cannon. ✨",
       "You smiled and the room got shinier. That's just a fact.",
-      "That grin is doing something to the atmosphere. Sparkly things.",
-      "Smile detected — glitter incoming. The universe is ready. ✨",
+      "You have the sexiest smile ✨",
     ],
     centered: [
       "You know how to own a frame. Glitter would just be extra.",
-      "Perfectly centred and absolutely sparkling.",
-      "That framing is impeccable. You were made for this shot. ✨",
-      "Centred and glowing — you understood the assignment completely.",
-      "Right in the middle, right on the shimmer. Nailed it.",
+      "You were made for this shot. ✨",
+      "Centred and glowing.",
+      "Nailed it.",
     ],
     lighting: [
       "The light is catching every sparkle on you right now.",
@@ -278,27 +276,21 @@ function makeComplimentDan(signals, transitions){
   // Compliment repository organised by category
   const repo = {
     highConfidence: [
-      "Mid-week and absolutely thriving — that's the cocktail energy right there. 🍹",
-      "Looking this good at the bar should come with a free round. Genuinely.",
-      "That confidence could order the most expensive cocktail on the menu and not flinch.",
-      "Top of the pub leaderboard. Completely uncontested. 🍸",
-      "The whole drinks menu would feel honoured right now. Seriously.",
+      "Gin and tonic energy. Perfection. 🍹",
+      "Looking this good at the bar should come with a free round. No doubt.",
+      "That look. We are going to find ourselves on a balcoy at 5 in the morning again. 🍸",
       "That energy is what Wednesday drinks was invented for. Iconic. 🍹",
     ],
     smile: [
       "That smile says the G&T hit exactly right. 🍹",
       "Smile like that? Someone definitely ordered the good gin.",
-      "That grin is worth at least one extra round.",
-      "You smiled and the bar got better. That's just how it works.",
-      "That smile? Cocktail-approved. The bartender agrees. 🥂",
-      "Genuinely — that's the smile of someone who found the best table.",
+      "You smiled and the place just got better. That's just how it works.",
     ],
     centered: [
-      "That framing is exactly the energy needed for mid-week drinks.",
+      "That is exactly the energy needed for mid-week drinks.",
       "Right in the middle of the shot, right in the middle of the night. 🍸",
-      "Perfectly centred — the pub photographer would approve.",
       "Dead centre and looking like you own the place. Respect.",
-      "That positioning is as solid as a well-made G&T.",
+      "Perfect like a well-made G&T.",
     ],
     lighting: [
       "Looking bright on a Wednesday — the cocktails are clearly working. 🍹",
