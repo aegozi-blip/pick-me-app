@@ -179,73 +179,10 @@ function computeConfidence({faceCount, smileCount, brightness, centered, close})
 
 // ---------- Daria Mode Compliments (sparkle & glitter themed) ----------
 function makeComplimentDaria(signals, transitions){
-  const { faceCount, smileCount, brightness, centered, close } = signals;
+  const { faceCount, smileCount, brightness, centered } = signals;
   if(faceCount === 0) return "";
 
-  function meetsConditions(conditions) {
-    if(conditions.minSmile && smileCount === 0) return false;
-    if(conditions.centered && !centered) return false;
-    if(conditions.brightLight && brightness <= 0.62) return false;
-    if(conditions.dimLight && brightness >= 0.35) return false;
-    if(conditions.duoClose && !(faceCount === 2 && close)) return false;
-    return true;
-  }
-
-  const soloCompliments = [
-    { conditions: { minSmile: true, centered: true, brightLight: true },
-      text: "Absolutely sparkling ✨ — that smile with perfect lighting is pure glitter magic." },
-    { conditions: { minSmile: true, centered: true },
-      text: "Centered, smiling, and absolutely glittering. You're the main event." },
-    { conditions: { minSmile: true, brightLight: true },
-      text: "That smile in this light? Straight-up sparkle energy." },
-    { conditions: { minSmile: true },
-      text: "Your smile is throwing glitter into the universe right now." },
-    { conditions: { centered: true, brightLight: true },
-      text: "Perfectly framed and glowing like a disco ball in the best way. ✨" },
-    { conditions: { centered: true },
-      text: "You know how to own a frame. Glitter would just be extra." },
-    { conditions: { brightLight: true },
-      text: "The light is catching every sparkle on you right now." },
-    { conditions: { dimLight: true },
-      text: "Mysterious, moody, and somehow still shimmering. Very you." },
-    { conditions: {},
-      text: "Okay. Pure sparkle. The frame literally can't handle it." },
-    { conditions: {},
-      text: "You arrived and the glitter followed. Obviously." },
-    { conditions: {},
-      text: "Main character. Confetti cannon optional but assumed. ✨" }
-  ];
-
-  const couple = [
-    { conditions: { duoClose: true, minSmile: true },
-      text: "Two smiles, one sparkle moment. You two are dangerously glittery. ✨" },
-    { conditions: { duoClose: true },
-      text: "That duo energy is sparkling together — dangerously synced." },
-    { conditions: { minSmile: true },
-      text: "A smiling duo dripping in glitter vibes? This is officially iconic." },
-    { conditions: {},
-      text: "Two of you? The glitter is doubling. This just got fun. ✨" },
-    { conditions: {},
-      text: "You two look like a sparkle plot twist." },
-    { conditions: {},
-      text: "Double glitter trouble. Absolutely stylish." }
-  ];
-
-  const group = [
-    { conditions: { minSmile: true, centered: true },
-      text: "This group understood the assignment — centered, smiling, and positively sparkling. ✨" },
-    { conditions: { minSmile: true },
-      text: "All those smiles? The glitter is off the charts right now." },
-    { conditions: { centered: true },
-      text: "Perfectly framed group, every single one of you sparkling." },
-    { conditions: {},
-      text: "Full sparkle mode — everyone in this group understood the assignment. ✨" },
-    { conditions: {},
-      text: "The glitter energy in this group is genuinely outrageous." },
-    { conditions: {},
-      text: "This looks like the glittery bit of the night everyone's here for." }
-  ];
-
+  // Transitions (special cases)
   if(transitions.becameCouple){
     return pick(["Oh hello — duo mode! Double the sparkle. 🌟", "Second face entered the glitter chat.", "Couple mode. The confetti is ready. ✨"]);
   }
@@ -253,114 +190,161 @@ function makeComplimentDaria(signals, transitions){
     return pick(["Okay wow — full sparkle group mode. ✨", "Three+ faces? The glitter just multiplied.", "Group shot. This is going to shimmer in the memory. 🌟"]);
   }
 
-  const smileTag = (smileCount > 0)
-    ? pick([" That smile is pure sparkle.", " Smile detected — glitter incoming. ✨", " That smile? Weaponised glitter."])
-    : "";
+  // Compliment repository organised by category
+  const repo = {
+    highConfidence: [
+      "Absolutely sparkling ✨ — that energy is pure glitter magic.",
+      "You are radiating today. The shimmer is completely real.",
+      "Honestly? Radiant. The kind of radiant that starts trends.",
+      "Pure sparkle energy. The frame literally can't handle it.",
+      "That glow is outrageous right now. Shimmering from here. ✨",
+      "Everything about this is giving main-character glitter. Flawless.",
+    ],
+    smile: [
+      "Your smile is throwing glitter into the universe right now.",
+      "That smile? Weaponised glitter. The best kind.",
+      "A smile like that deserves a confetti cannon. ✨",
+      "You smiled and the room got shinier. That's just a fact.",
+      "That grin is doing something to the atmosphere. Sparkly things.",
+      "Smile detected — glitter incoming. The universe is ready. ✨",
+    ],
+    centered: [
+      "You know how to own a frame. Glitter would just be extra.",
+      "Perfectly centred and absolutely sparkling.",
+      "That framing is impeccable. You were made for this shot. ✨",
+      "Centred and glowing — you understood the assignment completely.",
+      "Right in the middle, right on the shimmer. Nailed it.",
+    ],
+    lighting: [
+      "The light is catching every sparkle on you right now.",
+      "This lighting was made for you — or you were made for it.",
+      "Glowing like a disco ball in the absolute best way. ✨",
+      "Radiant under the lights. Every shimmer accounted for.",
+      "Bright, shimmering, and completely in your element right now.",
+    ],
+    couple: [
+      "Two of you? The glitter is doubling. This just got fun. ✨",
+      "You two look like a sparkle plot twist.",
+      "Double glitter trouble. Absolutely stylish.",
+      "That duo energy is sparkling — dangerously synced.",
+      "Two smiles, one shimmer moment. You two are dangerously glittery. ✨",
+      "A duo dripping in glitter vibes? This is officially iconic.",
+      "Side by side and radiating. The glitter approves of this pairing.",
+    ],
+    group: [
+      "Full sparkle mode — everyone in this group understood the assignment. ✨",
+      "The glitter energy in this group is genuinely outrageous.",
+      "This looks like the glittery bit of the night everyone came for.",
+      "All those faces, all that shimmer. The universe approves. ✨",
+      "This group is radiating. Every single one of you sparkling.",
+      "Collectively radiant. The glitter doesn't know where to start. ✨",
+    ],
+    generic: [
+      "Okay. Pure sparkle. The frame literally can't handle it.",
+      "You arrived and the glitter followed. Obviously.",
+      "Main character. Confetti cannon optional but assumed. ✨",
+      "Mysterious, moody, and somehow still shimmering. Very you.",
+      "Shimmer detected. The vibe is immaculate.",
+      "Casual glitter aura. Not everyone has it. You do.",
+    ],
+  };
 
-  let complimentSet = [];
-  if(faceCount === 1) complimentSet = soloCompliments;
-  else if(faceCount === 2) complimentSet = couple;
-  else complimentSet = group;
+  // Rule 5: Group / couple override
+  if(faceCount >= 3) return pick(repo.group);
+  if(faceCount === 2) return pick(repo.couple);
 
-  const filtered = complimentSet.filter(c => meetsConditions(c.conditions));
-  const base = filtered.length > 0
-    ? pick(filtered).text
-    : pick(complimentSet.filter(c => Object.keys(c.conditions).length === 0)).text;
-
-  return base + smileTag;
+  // Solo rules (faceCount === 1)
+  const confidence = computeConfidence(signals);
+  if(confidence >= 70) return pick(repo.highConfidence);  // Rule 1
+  if(smileCount > 0) return pick(repo.smile);             // Rule 2
+  if(centered) return pick(repo.centered);                // Rule 3
+  if(brightness > 0.62) return pick(repo.lighting);       // Rule 4
+  return pick(repo.generic);                              // Rule 6: fallback
 }
 
-// ---------- Dan Mode Compliments (Wednesday drinks & gin & tonics themed) ----------
+// ---------- Dan Mode Compliments (drinks & social themed) ----------
 function makeComplimentDan(signals, transitions){
-  const { faceCount, smileCount, brightness, centered, close } = signals;
+  const { faceCount, smileCount, brightness, centered } = signals;
   if(faceCount === 0) return "";
 
-  function meetsConditions(conditions) {
-    if(conditions.minSmile && smileCount === 0) return false;
-    if(conditions.centered && !centered) return false;
-    if(conditions.brightLight && brightness <= 0.62) return false;
-    if(conditions.dimLight && brightness >= 0.35) return false;
-    if(conditions.duoClose && !(faceCount === 2 && close)) return false;
-    return true;
-  }
-
-  const soloCompliments = [
-    { conditions: { minSmile: true, centered: true, brightLight: true },
-      text: "That smile, that lighting, that energy — this is mid-week G&T at its finest. 🍹" },
-    { conditions: { minSmile: true, centered: true },
-      text: "Centered and smiling on a Wednesday? Gin & tonic says you're doing brilliantly." },
-    { conditions: { minSmile: true, brightLight: true },
-      text: "That smile in that light? Someone's had a good Wednesday already." },
-    { conditions: { minSmile: true },
-      text: "That's the smile of someone who earned their Wednesday G&T." },
-    { conditions: { centered: true, brightLight: true },
-      text: "Perfectly framed for a Wednesday. The gin & tonic is on the way. 🍸" },
-    { conditions: { centered: true },
-      text: "That framing is exactly the kind of energy needed for mid-week drinks." },
-    { conditions: { brightLight: true },
-      text: "Looking bright on a Wednesday — the G&T is working wonders." },
-    { conditions: { dimLight: true },
-      text: "Moody bar lighting? That's just the Wednesday evening atmosphere right there." },
-    { conditions: {},
-      text: "Wednesday vibes and gin & tonics? You've got this absolutely sorted. 🍹" },
-    { conditions: {},
-      text: "You look like you could convincingly order the whole drinks menu on a Wednesday." },
-    { conditions: {},
-      text: "Mid-week. Full charm. G&T in hand (probably). Unbeatable combo." }
-  ];
-
-  const couple = [
-    { conditions: { duoClose: true, minSmile: true },
-      text: "Two smiling faces at Wednesday drinks? This G&T round is legendary. 🍹" },
-    { conditions: { duoClose: true },
-      text: "That duo energy at mid-week drinks is dangerously good." },
-    { conditions: { minSmile: true },
-      text: "A smiling duo on a Wednesday? The gin & tonics are clearly doing their job." },
-    { conditions: {},
-      text: "Wednesday drinks duo — now it's officially a session. 🍸" },
-    { conditions: {},
-      text: "You two look like you've found the best table on a Wednesday night." },
-    { conditions: {},
-      text: "Double trouble, but make it Wednesday gin & tonics. Stylish." }
-  ];
-
-  const group = [
-    { conditions: { minSmile: true, centered: true },
-      text: "Group, smiling, centered — this Wednesday drinks crew understood the assignment. 🍹" },
-    { conditions: { minSmile: true },
-      text: "All those smiles on a Wednesday? The G&T round is going around." },
-    { conditions: { centered: true },
-      text: "Perfectly framed group for a mid-week session. Everyone's in on it." },
-    { conditions: {},
-      text: "Wednesday drinks group? Everyone in this shot is absolutely iconic. 🍸" },
-    { conditions: {},
-      text: "The mid-week gin & tonic energy in this group is outrageous." },
-    { conditions: {},
-      text: "This looks like the Wednesday session everyone was invited to. Lucky them." }
-  ];
-
+  // Transitions (special cases)
   if(transitions.becameCouple){
-    return pick(["Oh hello — Wednesday duo mode. G&T for two? 🍹", "Second face. Now it's a proper Wednesday session.", "Couple mode activated. Someone call the bartender."]);
+    return pick(["Oh hello — Wednesday duo mode. G&T for two? 🍹", "Second face. Now it's a proper session.", "Couple mode activated. Someone call the bartender."]);
   }
   if(transitions.becameGroup){
-    return pick(["Okay wow — full Wednesday group mode. 🍹", "Three+ faces? The gin & tonic round just got bigger.", "Group Wednesday drinks? Yeah. This is the one."]);
+    return pick(["Okay wow — full pub group mode. 🍹", "Three+ faces? The round just got bigger.", "Group drinks? Yeah. This is the one."]);
   }
 
-  const smileTag = (smileCount > 0)
-    ? pick([" That smile says the G&T hit right.", " Smile detected — cheers! 🥂", " That smile? Gin & tonic approved."])
-    : "";
+  // Compliment repository organised by category
+  const repo = {
+    highConfidence: [
+      "Mid-week and absolutely thriving — that's the cocktail energy right there. 🍹",
+      "Looking this good at the bar should come with a free round. Genuinely.",
+      "That confidence could order the most expensive cocktail on the menu and not flinch.",
+      "Top of the pub leaderboard. Completely uncontested. 🍸",
+      "The whole drinks menu would feel honoured right now. Seriously.",
+      "That energy is what Wednesday drinks was invented for. Iconic. 🍹",
+    ],
+    smile: [
+      "That smile says the G&T hit exactly right. 🍹",
+      "Smile like that? Someone definitely ordered the good gin.",
+      "That grin is worth at least one extra round.",
+      "You smiled and the bar got better. That's just how it works.",
+      "That smile? Cocktail-approved. The bartender agrees. 🥂",
+      "Genuinely — that's the smile of someone who found the best table.",
+    ],
+    centered: [
+      "That framing is exactly the energy needed for mid-week drinks.",
+      "Right in the middle of the shot, right in the middle of the night. 🍸",
+      "Perfectly centred — the pub photographer would approve.",
+      "Dead centre and looking like you own the place. Respect.",
+      "That positioning is as solid as a well-made G&T.",
+    ],
+    lighting: [
+      "Looking bright on a Wednesday — the cocktails are clearly working. 🍹",
+      "This lighting was made for a drinks photo, and you were made for this lighting.",
+      "Glowing under the pub lights. The G&T is doing its job.",
+      "Lit up just right. The bar ambience is working in your favour.",
+      "Bright and radiant — the perfect Wednesday drinks look. 🍸",
+    ],
+    couple: [
+      "Wednesday drinks duo — now it's officially a session. 🍸",
+      "You two look like you've found the best table on a Wednesday night.",
+      "Double trouble, but make it Wednesday gin & tonics. Stylish.",
+      "That duo energy at mid-week drinks is dangerously good.",
+      "Two of you at the bar? The round just got more interesting. 🍹",
+      "A solid drinks duo. The cocktail menu doesn't stand a chance.",
+      "Side by side at the pub — this is peak Wednesday energy.",
+    ],
+    group: [
+      "Wednesday drinks group? Everyone in this shot is absolutely iconic. 🍸",
+      "The mid-week cocktail energy in this group is genuinely outrageous.",
+      "This looks like the session everyone was trying to get invited to.",
+      "Full pub crew assembled. The round is going to be legendary. 🍹",
+      "A group this good deserves a dedicated table and a round on the house.",
+      "Collectively brilliant at mid-week drinks. The bar is lucky. 🍸",
+    ],
+    generic: [
+      "Wednesday vibes and cocktails? You've got this absolutely sorted. 🍹",
+      "You look like someone who could convincingly order the whole drinks menu.",
+      "Mid-week. Full charm. G&T in hand (probably). Unbeatable combo.",
+      "Moody bar lighting? That's just the Wednesday evening atmosphere.",
+      "The pub energy is immaculate right now. Truly. 🍸",
+      "Casual mid-week cocktail aura. Not everyone has it. You do.",
+    ],
+  };
 
-  let complimentSet = [];
-  if(faceCount === 1) complimentSet = soloCompliments;
-  else if(faceCount === 2) complimentSet = couple;
-  else complimentSet = group;
+  // Rule 5: Group / couple override
+  if(faceCount >= 3) return pick(repo.group);
+  if(faceCount === 2) return pick(repo.couple);
 
-  const filtered = complimentSet.filter(c => meetsConditions(c.conditions));
-  const base = filtered.length > 0
-    ? pick(filtered).text
-    : pick(complimentSet.filter(c => Object.keys(c.conditions).length === 0)).text;
-
-  return base + smileTag;
+  // Solo rules (faceCount === 1)
+  const confidence = computeConfidence(signals);
+  if(confidence >= 70) return pick(repo.highConfidence);  // Rule 1
+  if(smileCount > 0) return pick(repo.smile);             // Rule 2
+  if(centered) return pick(repo.centered);                // Rule 3
+  if(brightness > 0.62) return pick(repo.lighting);       // Rule 4
+  return pick(repo.generic);                              // Rule 6: fallback
 }
 
 // ---------- Improved Compliments (CONDITION-BASED) ----------
