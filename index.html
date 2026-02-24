@@ -19,6 +19,7 @@
         <option value="daria">✨ Daria</option>
         <option value="dan">🍹 Dan</option>
       </select>
+      <button id="micBtn" class="micBtn" aria-label="Talk to pick-me-app" title="Talk to pick-me-app">🎤</button>
     </div>
   </header>
 
@@ -57,6 +58,14 @@
 
       <div class="microHint">
         Tip: If audio feels too much, mute your phone.
+      </div>
+
+      <div id="responseArea" class="responseArea" style="display:none">
+        <div id="recordingIndicator" class="recordingIndicator" style="display:none">
+          <span class="recordingDot"></span> Listening…
+        </div>
+        <div id="userInputDisplay" class="userInputDisplay" style="display:none"></div>
+        <div id="responseDisplay" class="responseDisplay" style="display:none"></div>
       </div>
     </section>
   </main>

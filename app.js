@@ -35,6 +35,7 @@ let lastSmileCount = 0;
 let lastBrightnessBucket = -1;
 let detectionInFlight = false;
 let modelsLoaded = false;
+let firstComplimentShown = false; // tracks if first contextual compliment has been given
 
 // Cache for performance
 let brightnessCanvas = null;
@@ -177,6 +178,125 @@ function computeConfidence({faceCount, smileCount, brightness, centered, close})
   return Math.round(clamp01(score) * 100);
 }
 
+// ---------- Compliment repositories (module-level for performance) ----------
+const dariaRepo = {
+  highConfidence: [
+    "Absolutely sparkling ✨ — that energy is pure glitter magic.",
+    "You are radiating today.",
+    "Honestly? Radiant. The kind of radiant that starts trends.",
+    "Pure sparkle energy. The frame literally can't handle it.",
+    "That glow is outrageous right now. Shimmering from here. ✨",
+    "Everything about this. Flawless.",
+  ],
+  smile: [
+    "Your smile is throwing glitter into the universe right now.",
+    "That smile? Weaponised glitter. The best kind.",
+    "A smile like that deserves a confetti cannon. ✨",
+    "You smiled and the room got shinier. That's just a fact.",
+    "You have the sexiest smile ✨",
+  ],
+  centered: [
+    "You know how to own a frame. Glitter would just be extra.",
+    "You were made for this shot. ✨",
+    "Centred and glowing.",
+    "Nailed it.",
+  ],
+  lighting: [
+    "The light is catching every sparkle on you right now.",
+    "This lighting was made for you — or you were made for it.",
+    "Glowing like a disco ball in the absolute best way. ✨",
+    "Radiant under the lights. Every shimmer accounted for.",
+    "Bright, shimmering, and completely in your element right now.",
+  ],
+  couple: [
+    "Two of you? The glitter is doubling. This just got fun. ✨",
+    "You two look like a sparkle plot twist.",
+    "Double glitter trouble. Absolutely stylish.",
+    "That duo energy is sparkling — dangerously synced.",
+    "Two smiles, one shimmer moment. You two are dangerously glittery. ✨",
+    "A duo dripping in glitter vibes? This is officially iconic.",
+    "Side by side and radiating. The glitter approves of this pairing.",
+  ],
+  group: [
+    "Full sparkle mode — everyone in this group understood the assignment. ✨",
+    "The glitter energy in this group is genuinely outrageous.",
+    "This looks like the glittery bit of the night everyone came for.",
+    "All those faces, all that shimmer. The universe approves. ✨",
+    "This group is radiating. Every single one of you sparkling.",
+    "Collectively radiant. The glitter doesn't know where to start. ✨",
+  ],
+  generic: [
+    "Okay. Pure sparkle. The frame literally can't handle it.",
+    "You arrived and the glitter followed. Obviously.",
+    "Main character. Confetti cannon optional but assumed. ✨",
+    "Mysterious, moody, and somehow still shimmering. Very you.",
+    "Shimmer detected. The vibe is immaculate.",
+    "Casual glitter aura. Not everyone has it. You do.",
+  ],
+};
+// Pre-computed solo pool for variety after first compliment
+const dariaSoloPool = [
+  ...dariaRepo.highConfidence, ...dariaRepo.smile, ...dariaRepo.centered,
+  ...dariaRepo.lighting, ...dariaRepo.generic,
+];
+
+const danRepo = {
+  highConfidence: [
+    "Gin and tonic energy. Perfection. 🍹",
+    "Looking this good at the bar should come with a free round. No doubt.",
+    "That look. We are going to find ourselves on a balcoy at 5 in the morning again. 🍸",
+    "That energy is what Wednesday drinks was invented for. Iconic. 🍹",
+  ],
+  smile: [
+    "That smile says the G&T hit exactly right. 🍹",
+    "Smile like that? Someone definitely ordered the good gin.",
+    "You smiled and the place just got better. That's just how it works.",
+  ],
+  centered: [
+    "That is exactly the energy needed for mid-week drinks.",
+    "Right in the middle of the shot, right in the middle of the night. 🍸",
+    "Dead centre and looking like you own the place. Respect.",
+    "Perfect like a well-made G&T.",
+  ],
+  lighting: [
+    "Looking bright on a Wednesday — the cocktails are clearly working. 🍹",
+    "This lighting was made for a drinks photo, and you were made for this lighting.",
+    "Glowing under the pub lights. The G&T is doing its job.",
+    "Lit up just right. The bar ambience is working in your favour.",
+    "Bright and radiant — the perfect Wednesday drinks look. 🍸",
+  ],
+  couple: [
+    "Wednesday drinks duo — now it's officially a session. 🍸",
+    "You two look like you've found the best table on a Wednesday night.",
+    "Double trouble, but make it Wednesday gin & tonics. Stylish.",
+    "That duo energy at mid-week drinks is dangerously good.",
+    "Two of you at the bar? The round just got more interesting. 🍹",
+    "A solid drinks duo. The cocktail menu doesn't stand a chance.",
+    "Side by side at the pub — this is peak Wednesday energy.",
+  ],
+  group: [
+    "Wednesday drinks group? Everyone in this shot is absolutely iconic. 🍸",
+    "The mid-week cocktail energy in this group is genuinely outrageous.",
+    "This looks like the session everyone was trying to get invited to.",
+    "Full pub crew assembled. The round is going to be legendary. 🍹",
+    "A group this good deserves a dedicated table and a round on the house.",
+    "Collectively brilliant at mid-week drinks. The bar is lucky. 🍸",
+  ],
+  generic: [
+    "Wednesday vibes and cocktails? You've got this absolutely sorted. 🍹",
+    "You look like someone who could convincingly order the whole drinks menu.",
+    "Mid-week. Full charm. G&T in hand (probably). Unbeatable combo.",
+    "Moody bar lighting? That's just the Wednesday evening atmosphere.",
+    "The pub energy is immaculate right now. Truly. 🍸",
+    "Casual mid-week cocktail aura. Not everyone has it. You do.",
+  ],
+};
+// Pre-computed solo pool for variety after first compliment
+const danSoloPool = [
+  ...danRepo.highConfidence, ...danRepo.smile, ...danRepo.centered,
+  ...danRepo.lighting, ...danRepo.generic,
+];
+
 // ---------- Daria Mode Compliments (sparkle & glitter themed) ----------
 function makeComplimentDaria(signals, transitions){
   const { faceCount, smileCount, brightness, centered } = signals;
@@ -190,74 +310,20 @@ function makeComplimentDaria(signals, transitions){
     return pick(["Okay wow — full sparkle group mode. ✨", "Three+ faces? The glitter just multiplied.", "Group shot. This is going to shimmer in the memory. 🌟"]);
   }
 
-  // Compliment repository organised by category
-  const repo = {
-    highConfidence: [
-      "Absolutely sparkling ✨ — that energy is pure glitter magic.",
-      "You are radiating today.",
-      "Honestly? Radiant. The kind of radiant that starts trends.",
-      "Pure sparkle energy. The frame literally can't handle it.",
-      "That glow is outrageous right now. Shimmering from here. ✨",
-      "Everything about this. Flawless.",
-    ],
-    smile: [
-      "Your smile is throwing glitter into the universe right now.",
-      "That smile? Weaponised glitter. The best kind.",
-      "A smile like that deserves a confetti cannon. ✨",
-      "You smiled and the room got shinier. That's just a fact.",
-      "You have the sexiest smile ✨",
-    ],
-    centered: [
-      "You know how to own a frame. Glitter would just be extra.",
-      "You were made for this shot. ✨",
-      "Centred and glowing.",
-      "Nailed it.",
-    ],
-    lighting: [
-      "The light is catching every sparkle on you right now.",
-      "This lighting was made for you — or you were made for it.",
-      "Glowing like a disco ball in the absolute best way. ✨",
-      "Radiant under the lights. Every shimmer accounted for.",
-      "Bright, shimmering, and completely in your element right now.",
-    ],
-    couple: [
-      "Two of you? The glitter is doubling. This just got fun. ✨",
-      "You two look like a sparkle plot twist.",
-      "Double glitter trouble. Absolutely stylish.",
-      "That duo energy is sparkling — dangerously synced.",
-      "Two smiles, one shimmer moment. You two are dangerously glittery. ✨",
-      "A duo dripping in glitter vibes? This is officially iconic.",
-      "Side by side and radiating. The glitter approves of this pairing.",
-    ],
-    group: [
-      "Full sparkle mode — everyone in this group understood the assignment. ✨",
-      "The glitter energy in this group is genuinely outrageous.",
-      "This looks like the glittery bit of the night everyone came for.",
-      "All those faces, all that shimmer. The universe approves. ✨",
-      "This group is radiating. Every single one of you sparkling.",
-      "Collectively radiant. The glitter doesn't know where to start. ✨",
-    ],
-    generic: [
-      "Okay. Pure sparkle. The frame literally can't handle it.",
-      "You arrived and the glitter followed. Obviously.",
-      "Main character. Confetti cannon optional but assumed. ✨",
-      "Mysterious, moody, and somehow still shimmering. Very you.",
-      "Shimmer detected. The vibe is immaculate.",
-      "Casual glitter aura. Not everyone has it. You do.",
-    ],
-  };
+  // Rule 5: Group / couple override (always category-specific)
+  if(faceCount >= 3) return pick(dariaRepo.group);
+  if(faceCount === 2) return pick(dariaRepo.couple);
 
-  // Rule 5: Group / couple override
-  if(faceCount >= 3) return pick(repo.group);
-  if(faceCount === 2) return pick(repo.couple);
+  // After first solo compliment, pick randomly from the entire solo pool for variety
+  if(firstComplimentShown) return pick(dariaSoloPool);
 
-  // Solo rules (faceCount === 1)
+  // Solo rules – condition-based for first compliment (faceCount === 1)
   const confidence = computeConfidence(signals);
-  if(confidence >= 70) return pick(repo.highConfidence);  // Rule 1
-  if(smileCount > 0) return pick(repo.smile);             // Rule 2
-  if(centered) return pick(repo.centered);                // Rule 3
-  if(brightness > 0.62) return pick(repo.lighting);       // Rule 4
-  return pick(repo.generic);                              // Rule 6: fallback
+  if(confidence >= 70) return pick(dariaRepo.highConfidence);  // Rule 1
+  if(smileCount > 0) return pick(dariaRepo.smile);             // Rule 2
+  if(centered) return pick(dariaRepo.centered);                // Rule 3
+  if(brightness > 0.62) return pick(dariaRepo.lighting);       // Rule 4
+  return pick(dariaRepo.generic);                              // Rule 6: fallback
 }
 
 // ---------- Dan Mode Compliments (drinks & social themed) ----------
@@ -273,71 +339,22 @@ function makeComplimentDan(signals, transitions){
     return pick(["Okay wow — full pub group mode. 🍹", "Three+ faces? The round just got bigger.", "Group drinks? Yeah. This is the one."]);
   }
 
-  // Compliment repository organised by category
-  const repo = {
-    highConfidence: [
-      "Gin and tonic energy. Perfection. 🍹",
-      "Looking this good at the bar should come with a free round. No doubt.",
-      "That look. We are going to find ourselves on a balcoy at 5 in the morning again. 🍸",
-      "That energy is what Wednesday drinks was invented for. Iconic. 🍹",
-    ],
-    smile: [
-      "That smile says the G&T hit exactly right. 🍹",
-      "Smile like that? Someone definitely ordered the good gin.",
-      "You smiled and the place just got better. That's just how it works.",
-    ],
-    centered: [
-      "That is exactly the energy needed for mid-week drinks.",
-      "Right in the middle of the shot, right in the middle of the night. 🍸",
-      "Dead centre and looking like you own the place. Respect.",
-      "Perfect like a well-made G&T.",
-    ],
-    lighting: [
-      "Looking bright on a Wednesday — the cocktails are clearly working. 🍹",
-      "This lighting was made for a drinks photo, and you were made for this lighting.",
-      "Glowing under the pub lights. The G&T is doing its job.",
-      "Lit up just right. The bar ambience is working in your favour.",
-      "Bright and radiant — the perfect Wednesday drinks look. 🍸",
-    ],
-    couple: [
-      "Wednesday drinks duo — now it's officially a session. 🍸",
-      "You two look like you've found the best table on a Wednesday night.",
-      "Double trouble, but make it Wednesday gin & tonics. Stylish.",
-      "That duo energy at mid-week drinks is dangerously good.",
-      "Two of you at the bar? The round just got more interesting. 🍹",
-      "A solid drinks duo. The cocktail menu doesn't stand a chance.",
-      "Side by side at the pub — this is peak Wednesday energy.",
-    ],
-    group: [
-      "Wednesday drinks group? Everyone in this shot is absolutely iconic. 🍸",
-      "The mid-week cocktail energy in this group is genuinely outrageous.",
-      "This looks like the session everyone was trying to get invited to.",
-      "Full pub crew assembled. The round is going to be legendary. 🍹",
-      "A group this good deserves a dedicated table and a round on the house.",
-      "Collectively brilliant at mid-week drinks. The bar is lucky. 🍸",
-    ],
-    generic: [
-      "Wednesday vibes and cocktails? You've got this absolutely sorted. 🍹",
-      "You look like someone who could convincingly order the whole drinks menu.",
-      "Mid-week. Full charm. G&T in hand (probably). Unbeatable combo.",
-      "Moody bar lighting? That's just the Wednesday evening atmosphere.",
-      "The pub energy is immaculate right now. Truly. 🍸",
-      "Casual mid-week cocktail aura. Not everyone has it. You do.",
-    ],
-  };
+  // Rule 5: Group / couple override (always category-specific)
+  if(faceCount >= 3) return pick(danRepo.group);
+  if(faceCount === 2) return pick(danRepo.couple);
 
-  // Rule 5: Group / couple override
-  if(faceCount >= 3) return pick(repo.group);
-  if(faceCount === 2) return pick(repo.couple);
+  // After first solo compliment, pick randomly from the entire solo pool for variety
+  if(firstComplimentShown) return pick(danSoloPool);
 
-  // Solo rules (faceCount === 1)
+  // Solo rules – condition-based for first compliment (faceCount === 1)
   const confidence = computeConfidence(signals);
-  if(confidence >= 70) return pick(repo.highConfidence);  // Rule 1
-  if(smileCount > 0) return pick(repo.smile);             // Rule 2
-  if(centered) return pick(repo.centered);                // Rule 3
-  if(brightness > 0.62) return pick(repo.lighting);       // Rule 4
-  return pick(repo.generic);                              // Rule 6: fallback
+  if(confidence >= 70) return pick(danRepo.highConfidence);  // Rule 1
+  if(smileCount > 0) return pick(danRepo.smile);             // Rule 2
+  if(centered) return pick(danRepo.centered);                // Rule 3
+  if(brightness > 0.62) return pick(danRepo.lighting);       // Rule 4
+  return pick(danRepo.generic);                              // Rule 6: fallback
 }
+
 
 // ---------- Improved Compliments (CONDITION-BASED) ----------
 function makeCompliment(signals, transitions){
@@ -486,6 +503,156 @@ function makeCompliment(signals, transitions){
   return base + smileTag;
 }
 
+// ---------- User Response Repository ----------
+const userResponseRepo = {
+  negativeAppearance: [
+    "Your look is absolutely amazing!",
+    "You look incredible — don't let that thought in!",
+    "That's not what I see at all. You look stunning.",
+    "You are way harder on yourself than you should be.",
+  ],
+  badHair: [
+    "Your hair looks fantastic from here!",
+    "That hair has great energy — I'm seeing it.",
+    "Honestly? The hair is giving exactly the right vibes.",
+    "Bad hair day? I'm not seeing it. Looks great.",
+  ],
+  notPhotogenic: [
+    "You photograph beautifully — the camera loves you!",
+    "Not photogenic? That's just wrong. You're made for this.",
+    "I'm looking right at you and you're stunning. Trust me.",
+  ],
+  lookingGood: [
+    "Yes! You look absolutely amazing right now.",
+    "You look great — that's not even a question.",
+    "Looking good? You're looking incredible.",
+    "Genuinely, yes. You're looking fantastic.",
+  ],
+  thankYou: [
+    "You're so welcome! You make it easy.",
+    "The pleasure is genuinely mine.",
+    "Anytime! You deserve every word.",
+    "Don't mention it — you're a joy to compliment.",
+  ],
+  youreNice: [
+    "Well, you're even nicer to look at!",
+    "That means so much — thank you for saying that.",
+    "You're pretty wonderful yourself!",
+    "Aw, stop it — actually no, keep going. You're lovely.",
+  ],
+  generic: [
+    "I hear you — and you look amazing, by the way.",
+    "That's valid. And you're still looking great.",
+    "Noted! You're doing wonderfully.",
+    "Absolutely. And might I add — you look brilliant today.",
+  ],
+};
+
+// ---------- Intent Detection ----------
+function analyzeUserInput(text){
+  const lower = text.toLowerCase();
+  if(/hair/.test(lower)) return "badHair";
+  if(/not photogenic|don.t look good in photo|bad in photo/.test(lower)) return "notPhotogenic";
+  if(/(look|am|feel).*(terrible|ugly|awful|horrible|bad|worst|gross)|terrible|ugly|awful|horrible|i look bad/.test(lower)) return "negativeAppearance";
+  if(/do i look|look good|look nice|look okay|am i pretty|am i handsome/.test(lower)) return "lookingGood";
+  if(/thank|thanks/.test(lower)) return "thankYou";
+  if(/nice|sweet|kind|lovely|great app|love you|you.re (great|amazing|wonderful)/.test(lower)) return "youreNice";
+  return "generic";
+}
+
+// ---------- Generate Response ----------
+function generateResponse(intent){
+  const responses = userResponseRepo[intent] || userResponseRepo.generic;
+  return pick(responses);
+}
+
+// ---------- Mic UI helpers ----------
+function updateMicUI(recording){
+  const micBtn = document.getElementById("micBtn");
+  const recordingIndicator = document.getElementById("recordingIndicator");
+  const responseArea = document.getElementById("responseArea");
+  if(!micBtn || !recordingIndicator || !responseArea) return;
+  responseArea.style.display = "block";
+  micBtn.classList.toggle("recording", recording);
+  recordingIndicator.style.display = recording ? "flex" : "none";
+}
+
+function showUserInput(text){
+  const el = document.getElementById("userInputDisplay");
+  if(!el) return;
+  el.textContent = `"${text}"`;
+  el.style.display = "block";
+}
+
+function showResponse(text){
+  const el = document.getElementById("responseDisplay");
+  if(!el) return;
+  el.textContent = text;
+  el.style.display = "block";
+}
+
+// ---------- Speech Recognition ----------
+let recognition = null;
+let isRecording = false;
+
+function startRecording(){
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SpeechRecognition){
+    showResponse("Speech recognition is not supported in this browser.");
+    updateMicUI(false);
+    return;
+  }
+
+  if(recognition) recognition.abort();
+  recognition = new SpeechRecognition();
+  recognition.lang = "en-US";
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
+
+  recognition.onstart = () => {
+    isRecording = true;
+    updateMicUI(true);
+  };
+
+  recognition.onresult = (event) => {
+    const transcript = event.results[0][0].transcript;
+    showUserInput(transcript);
+    const intent = analyzeUserInput(transcript);
+    const response = generateResponse(intent);
+    showResponse(response);
+    speak(response);
+  };
+
+  recognition.onerror = (event) => {
+    console.error("Speech recognition error:", event.error);
+    isRecording = false;
+    updateMicUI(false);
+  };
+
+  recognition.onend = () => {
+    isRecording = false;
+    updateMicUI(false);
+  };
+
+  recognition.start();
+}
+
+function stopRecording(){
+  if(recognition && isRecording) recognition.stop();
+}
+
+function initMicButton(){
+  const micBtn = document.getElementById("micBtn");
+  if(!micBtn) return;
+  micBtn.addEventListener("click", () => {
+    if(isRecording){
+      stopRecording();
+    } else {
+      startRecording();
+    }
+  });
+}
+
 // ---------- Compliment triggers ----------
 function shouldGenerateCompliment(signals){
   const now = Date.now();
@@ -631,6 +798,7 @@ async function detectOnce(){
 
 function onNoFaces(){
   stopSpeakingHard();
+  firstComplimentShown = false;
   statusEl.textContent = "No face detected";
   complimentEl.textContent = "No face detected. Come back when you're ready to be admired.";
   const zero = { faceCount:0, smileCount:0, brightness:0, centered:false, close:false };
@@ -679,6 +847,7 @@ async function loop(){
       if(text){
         complimentEl.textContent = text;
         lastComplimentAt = Date.now();
+        firstComplimentShown = true;
         speak(text);
       }
     }
@@ -714,6 +883,7 @@ async function boot(){
 
   initVoice();
   initVoiceSelector();
+  initMicButton();
 
   try{
     await loadModels();
