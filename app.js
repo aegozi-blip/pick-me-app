@@ -20,6 +20,8 @@ const barFill = document.getElementById("barFill");
 const confidenceHint = document.getElementById("confidenceHint");
 
 let selectedVoice = null;
+let selectedMaleVoice = null;
+let selectedFemaleVoice = null;
 let voices = [];
 let currentVoiceMode = "daria"; // "daria" or "dan"
 
@@ -42,6 +44,7 @@ let brightnessCanvas = null;
 let lastDisplayedConfidence = -1;
 let lastDisplayedHint = "";
 let loopInterval = null;
+let lastSignals = null; // cache last detection result for button handler
 
 // ---------- Helpers ----------
 function clamp01(x){ return Math.max(0, Math.min(1, x)); }
@@ -88,14 +91,60 @@ function scoreVoice(v){
   return s;
 }
 
+function scoreMaleVoice(v){
+  const name = (v.name || "").toLowerCase();
+  const lang = (v.lang || "").toLowerCase();
+  let s = 0;
+  if(lang.startsWith("en")) s += 5;
+  if(lang.includes("en-us")) s += 2;
+  if(name.includes("daniel")) s += 10;
+  if(name.includes("david")) s += 9;
+  if(name.includes("alex")) s += 8;
+  if(name.includes("aaron")) s += 8;
+  if(name.includes("paul")) s += 7;
+  if(name.includes("mark")) s += 7;
+  if(name.includes("premium")) s += 6;
+  if(name.includes("enhanced")) s += 5;
+  if(name.includes("natural")) s += 5;
+  if(name.includes("compact")) s -= 2;
+  if(name.includes("espeak")) s -= 10;
+  if(v.localService) s += 1;
+  return s;
+}
+
+function scoreFemaleVoice(v){
+  const name = (v.name || "").toLowerCase();
+  const lang = (v.lang || "").toLowerCase();
+  let s = 0;
+  if(lang.startsWith("en")) s += 5;
+  if(lang.includes("en-us")) s += 2;
+  if(name.includes("victoria")) s += 10;
+  if(name.includes("samantha")) s += 9;
+  if(name.includes("karen")) s += 8;
+  if(name.includes("moira")) s += 8;
+  if(name.includes("tessa")) s += 7;
+  if(name.includes("siri")) s += 6;
+  if(name.includes("premium")) s += 6;
+  if(name.includes("enhanced")) s += 5;
+  if(name.includes("natural")) s += 5;
+  if(name.includes("compact")) s -= 2;
+  if(name.includes("espeak")) s -= 10;
+  if(v.localService) s += 1;
+  return s;
+}
+
 function initVoice(){
   if(!window.speechSynthesis) return;
 
   const populate = () => {
     voices = (window.speechSynthesis.getVoices() || []).slice();
     if(!voices.length) return;
-    voices.sort((a,b)=>scoreVoice(b)-scoreVoice(a));
-    selectedVoice = voices[0] || null;
+    const sorted = voices.slice().sort((a,b) => scoreVoice(b) - scoreVoice(a));
+    selectedVoice = sorted[0] || null;
+    const maleSorted = voices.slice().sort((a,b) => scoreMaleVoice(b) - scoreMaleVoice(a));
+    selectedMaleVoice = maleSorted[0] || selectedVoice;
+    const femaleSorted = voices.slice().sort((a,b) => scoreFemaleVoice(b) - scoreFemaleVoice(a));
+    selectedFemaleVoice = femaleSorted[0] || selectedVoice;
   };
 
   populate();
@@ -115,7 +164,21 @@ function speak(text){
   u.lang = "en-US";
   u.rate = 1.02;
   u.pitch = 1.06;
-  if(selectedVoice) u.voice = selectedVoice;
+  const voice = currentVoiceMode === "dan" ? selectedMaleVoice : selectedFemaleVoice;
+  if(voice) u.voice = voice;
+  window.speechSynthesis.speak(u);
+}
+
+function speakForced(text){
+  if(!window.speechSynthesis) return;
+  lastSpokenAt = Date.now();
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = "en-US";
+  u.rate = 1.02;
+  u.pitch = 1.06;
+  const voice = currentVoiceMode === "dan" ? selectedMaleVoice : selectedFemaleVoice;
+  if(voice) u.voice = voice;
   window.speechSynthesis.speak(u);
 }
 
@@ -620,7 +683,7 @@ function startRecording(){
     const intent = analyzeUserInput(transcript);
     const response = generateResponse(intent);
     showResponse(response);
-    speak(response);
+    speakForced(response);
   };
 
   recognition.onerror = (event) => {
@@ -655,16 +718,11 @@ function initMicButton(){
 
 // ---------- Compliment triggers ----------
 function shouldGenerateCompliment(signals){
-  const now = Date.now();
-  const brightnessBucket = Math.round(signals.brightness * 10);
-
-  const faceCountChanged = signals.faceCount !== lastFaceCount;
-  const smilesChanged = signals.smileCount !== lastSmileCount;
-  const brightnessChanged = brightnessBucket !== lastBrightnessBucket;
-
-  const timeElapsed = (now - lastComplimentAt) > complimentMinIntervalMs;
-
-  return faceCountChanged || smilesChanged || (timeElapsed && (brightnessChanged || signals.faceCount > 0));
+  // Only generate when face first appears or group size transitions
+  const faceJustAppeared = (lastFaceCount === 0 && signals.faceCount > 0);
+  const becameCouple = (lastFaceCount !== 2 && signals.faceCount === 2);
+  const becameGroup = (lastFaceCount < 3 && signals.faceCount >= 3);
+  return faceJustAppeared || becameCouple || becameGroup;
 }
 
 function updateState(signals){
@@ -673,7 +731,30 @@ function updateState(signals){
   lastBrightnessBucket = Math.round(signals.brightness * 10);
 }
 
-// ---------- Confidence UI (WITH ANIMATIONS & CACHING) ----------
+// ---------- More Compliments button ----------
+function initMoreComplimentsBtn(){
+  const btn = document.getElementById("moreComplimentsBtn");
+  if(!btn) return;
+  btn.addEventListener("click", () => {
+    if(!lastSignals || lastSignals.faceCount === 0) return;
+    const transitions = { becameCouple: false, becameGroup: false };
+    const text = currentVoiceMode === "dan"
+      ? makeComplimentDan(lastSignals, transitions)
+      : makeComplimentDaria(lastSignals, transitions);
+    if(text){
+      complimentEl.textContent = text;
+      speakForced(text);
+    }
+  });
+}
+
+function updateMoreComplimentsBtn(faceCount){
+  const btn = document.getElementById("moreComplimentsBtn");
+  if(!btn) return;
+  btn.style.display = (firstComplimentShown && faceCount > 0) ? "block" : "none";
+}
+
+
 function updateConfidenceUI(confPct, signals){
   // Only update DOM if confidence actually changed
   if(lastDisplayedConfidence !== confPct) {
@@ -803,6 +884,7 @@ function onNoFaces(){
   complimentEl.textContent = "No face detected. Come back when you're ready to be admired.";
   const zero = { faceCount:0, smileCount:0, brightness:0, centered:false, close:false };
   updateConfidenceUI(0, zero);
+  updateMoreComplimentsBtn(0);
 }
 
 async function loop(){
@@ -852,6 +934,8 @@ async function loop(){
       }
     }
 
+    lastSignals = signals;
+    updateMoreComplimentsBtn(signals.faceCount);
     updateState(signals);
   } catch(e){
     console.error(e);
@@ -884,6 +968,7 @@ async function boot(){
   initVoice();
   initVoiceSelector();
   initMicButton();
+  initMoreComplimentsBtn();
 
   try{
     await loadModels();
