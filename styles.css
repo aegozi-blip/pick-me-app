@@ -32,7 +32,21 @@ html,body{
 
 .bannerRight{
   display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:6px;
+}
+
+.bannerRightTop{
+  display:flex;
   align-items:center;
+}
+
+.bannerRightBtns{
+  display:flex;
+  gap:6px;
+  justify-content:flex-end;
+  flex-wrap:wrap;
 }
 
 .bannerTitle{
@@ -326,24 +340,18 @@ html,body{
 /* ===== MORE COMPLIMENTS BUTTON ===== */
 
 .moreComplimentsBtn{
-  position:fixed;
-  bottom:20px;
-  left:20px;
-  padding:12px 18px;
-  background:rgba(11,15,25,0.88);
+  padding:7px 13px;
+  background:rgba(255,255,255,0.08);
   border:1px solid var(--stroke);
   border-radius:50px;
   color:var(--text);
-  font-size:14px;
+  font-size:13px;
   font-weight:700;
   cursor:pointer;
   text-align:center;
   transition:background 0.2s, border-color 0.2s;
   letter-spacing:0.3px;
-  backdrop-filter:blur(10px);
-  -webkit-backdrop-filter:blur(10px);
-  box-shadow:0 4px 20px rgba(0,0,0,0.45);
-  z-index:100;
+  white-space:nowrap;
 }
 
 .moreComplimentsBtn:hover{
@@ -354,24 +362,18 @@ html,body{
 /* ===== BATTLE BUTTON ===== */
 
 .battleBtn{
-  position:fixed;
-  bottom:72px;
-  left:20px;
-  padding:12px 18px;
-  background:rgba(11,15,25,0.88);
+  padding:7px 13px;
+  background:rgba(255,255,255,0.08);
   border:1px solid var(--stroke);
   border-radius:50px;
   color:var(--text);
-  font-size:14px;
+  font-size:13px;
   font-weight:700;
   cursor:pointer;
   text-align:center;
   transition:background 0.2s, border-color 0.2s;
   letter-spacing:0.3px;
-  backdrop-filter:blur(10px);
-  -webkit-backdrop-filter:blur(10px);
-  box-shadow:0 4px 20px rgba(0,0,0,0.45);
-  z-index:100;
+  white-space:nowrap;
 }
 
 .battleBtn:hover{
@@ -461,6 +463,41 @@ html,body{
   padding:8px 0;
 }
 
+.battleSlot.clickable{
+  cursor:pointer;
+}
+
+.battleSlot.clickable:hover{
+  border-color:rgba(255,255,255,0.7);
+  box-shadow:0 0 20px rgba(255,255,255,0.2);
+  transform:scale(1.02);
+  transition:transform 0.15s ease, border-color 0.15s, box-shadow 0.15s;
+}
+
+/* ===== GLITTER OVERLAY ===== */
+
+.glitterOverlay{
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:999;
+  overflow:hidden;
+  display:none;
+}
+
+.glitterParticle{
+  position:absolute;
+  border-radius:50%;
+  animation:glitter-fall 2.2s ease-out forwards;
+  pointer-events:none;
+}
+
+@keyframes glitter-fall{
+  0%  { transform:translateY(0) rotate(0deg) scale(1); opacity:1; }
+  80% { opacity:0.7; }
+  100%{ transform:translateY(110vh) rotate(720deg) scale(0.4); opacity:0; }
+}
+
 /* ===== GLITTER ANIMATION ===== */
 
 @keyframes twinkle {
@@ -524,6 +561,12 @@ html,body{
   .micBtn{
     font-size:14px;
     padding:5px 8px;
+  }
+
+  .moreComplimentsBtn,
+  .battleBtn{
+    font-size:11px;
+    padding:5px 10px;
   }
 
   .responseDisplay{

@@ -48,6 +48,7 @@ let lastSignals = null; // cache last detection result for button handler
 let battleInProgress = false;
 let battleStopRequested = false;
 let isActionInProgress = false; // prevents face detection from interrupting speech/actions
+let voteResolver = null; // resolves the battle vote-waiting promise
 
 // Battle timing constants
 const battleTurnDelayMs = 500;
@@ -61,6 +62,15 @@ function joinNicely(items){
   if(items.length === 1) return items[0];
   if(items.length === 2) return `${items[0]} and ${items[1]}`;
   return `${items.slice(0,-1).join(", ")}, and ${items[items.length-1]}`;
+}
+
+function stripEmojisForSpeech(text){
+  return text
+    .replace(/[\u{1F300}-\u{1FAFF}]/gu, '')  // Emoji & pictograph ranges
+    .replace(/[\u{2300}-\u{27BF}]/gu, '')     // Misc technical + symbols
+    .replace(/[\u{FE00}-\u{FE0F}]/gu, '')     // Variation selectors
+    .replace(/\s{2,}/g, ' ')
+    .trim();
 }
 
 // ---------- Voice mode selector ----------
@@ -182,7 +192,7 @@ function speak(text){
   lastSpokenAt = now;
 
   window.speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(text);
+  const u = new SpeechSynthesisUtterance(stripEmojisForSpeech(text));
   u.lang = "en-US";
   u.rate = 1.02;
   u.pitch = 1.06;
@@ -198,7 +208,7 @@ function speakForced(text){
   if(!window.speechSynthesis) return;
   lastSpokenAt = Date.now();
   window.speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(text);
+  const u = new SpeechSynthesisUtterance(stripEmojisForSpeech(text));
   u.lang = "en-US";
   u.rate = 1.02;
   u.pitch = 1.06;
@@ -788,7 +798,7 @@ function speakWithMode(text, mode){
   return new Promise(resolve => {
     if(!window.speechSynthesis){ resolve(); return; }
     window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
+    const u = new SpeechSynthesisUtterance(stripEmojisForSpeech(text));
     u.lang = "en-US";
     u.rate = 1.02;
     u.pitch = 1.06;
@@ -807,76 +817,122 @@ function getBattleCompliment(mode, signals){
     : makeComplimentDaria(signals, transitions);
 }
 
+function triggerGlitter(){
+  const overlay = document.getElementById("glitterOverlay");
+  if(!overlay) return;
+  overlay.innerHTML = "";
+  overlay.style.display = "block";
+  const colors = ["#FFD700","#FF69B4","#00BFFF","#ADFF2F","#FF6347","#EE82EE","#ffffff"];
+  for(let i = 0; i < 90; i++){
+    const p = document.createElement("span");
+    p.className = "glitterParticle";
+    const size = 4 + Math.random() * 8;
+    p.style.cssText = [
+      `left:${Math.random() * 100}vw`,
+      `top:${Math.random() * 20 - 5}vh`,
+      `background:${colors[Math.floor(Math.random() * colors.length)]}`,
+      `width:${size}px`,
+      `height:${size}px`,
+      `animation-duration:${1.5 + Math.random() * 1.2}s`,
+      `animation-delay:${Math.random() * 0.5}s`,
+    ].join(";");
+    overlay.appendChild(p);
+  }
+  setTimeout(() => { overlay.style.display = "none"; overlay.innerHTML = ""; }, 3000);
+}
+
+function endBattle(){
+  const battlePanel = document.getElementById("battlePanel");
+  if(battlePanel) battlePanel.style.display = "none";
+  battleInProgress = false;
+  isActionInProgress = false;
+  const dariaBattleSlot = document.getElementById("dariaBattleSlot");
+  const danBattleSlot   = document.getElementById("danBattleSlot");
+  if(dariaBattleSlot) dariaBattleSlot.classList.remove("active","clickable");
+  if(danBattleSlot)   danBattleSlot.classList.remove("active","clickable");
+  if(voteResolver){ voteResolver(null); voteResolver = null; }
+  const battleBtn = document.getElementById("battleBtn");
+  if(battleBtn && lastSignals && lastSignals.faceCount > 0 && firstComplimentShown){
+    battleBtn.style.display = "block";
+  }
+}
+
 async function runBattle(){
   if(!lastSignals || lastSignals.faceCount === 0) return;
 
-  const battlePanel   = document.getElementById("battlePanel");
-  const battleBtn     = document.getElementById("battleBtn");
-  const battleRoundEl = document.getElementById("battleRound");
-  const dariaBattleText = document.getElementById("dariaBattleText");
-  const danBattleText   = document.getElementById("danBattleText");
-  const dariaBattleSlot = document.getElementById("dariaBattleSlot");
-  const danBattleSlot   = document.getElementById("danBattleSlot");
-  const battleResult    = document.getElementById("battleResult");
+  const battlePanel    = document.getElementById("battlePanel");
+  const battleBtn      = document.getElementById("battleBtn");
+  const battleStatusEl = document.getElementById("battleStatus");
+  const dariaBattleText  = document.getElementById("dariaBattleText");
+  const danBattleText    = document.getElementById("danBattleText");
+  const dariaBattleSlot  = document.getElementById("dariaBattleSlot");
+  const danBattleSlot    = document.getElementById("danBattleSlot");
+  const battleResult     = document.getElementById("battleResult");
 
   battleInProgress = true;
   battleStopRequested = false;
   isActionInProgress = true;
+  voteResolver = null;
   battlePanel.style.display = "block";
   battleBtn.style.display = "none";
   battleResult.style.display = "none";
+  battleStatusEl.textContent = "Loading…";
   dariaBattleText.textContent = "…";
   danBattleText.textContent = "…";
+  dariaBattleSlot.classList.remove("active","clickable");
+  danBattleSlot.classList.remove("active","clickable");
 
-  const rounds = 3;
-  for(let r = 1; r <= rounds; r++){
-    if(battleStopRequested) break;
+  const dariaText = getBattleCompliment("daria", lastSignals);
+  const danText   = getBattleCompliment("dan",   lastSignals);
 
-    battleRoundEl.textContent = `Round ${r} of ${rounds}`;
-    dariaBattleSlot.classList.remove("active");
-    danBattleSlot.classList.remove("active");
-
-    // Daria's turn
-    dariaBattleSlot.classList.add("active");
-    const dariaText = getBattleCompliment("daria", lastSignals);
-    dariaBattleText.textContent = dariaText;
-    await speakWithMode(dariaText, "daria");
-    if(battleStopRequested) break;
-
-    await new Promise(resolve => setTimeout(resolve, battleTurnDelayMs));
-    if(battleStopRequested) break;
-
-    // Dan's turn
-    dariaBattleSlot.classList.remove("active");
-    danBattleSlot.classList.add("active");
-    const danText = getBattleCompliment("dan", lastSignals);
-    danBattleText.textContent = danText;
-    await speakWithMode(danText, "dan");
-    if(battleStopRequested) break;
-
-    if(r < rounds){
-      danBattleSlot.classList.remove("active");
-      await new Promise(resolve => setTimeout(resolve, battleRoundDelayMs));
-    }
-  }
+  // Daria speaks
+  dariaBattleSlot.classList.add("active");
+  dariaBattleText.textContent = dariaText;
+  await speakWithMode(dariaText, "daria");
+  if(battleStopRequested){ endBattle(); return; }
 
   dariaBattleSlot.classList.remove("active");
+  await new Promise(r => setTimeout(r, battleTurnDelayMs));
+  if(battleStopRequested){ endBattle(); return; }
+
+  // Dan speaks
+  danBattleSlot.classList.add("active");
+  danBattleText.textContent = danText;
+  await speakWithMode(danText, "dan");
+  if(battleStopRequested){ endBattle(); return; }
+
   danBattleSlot.classList.remove("active");
 
-  if(!battleStopRequested){
-    battleRoundEl.textContent = "Battle Complete! 🎉";
-    battleResult.textContent = "It's a tie! You're awesome either way! 🎉";
-    battleResult.style.display = "block";
-    await speakWithMode("It's a tie! You are awesome either way!", currentVoiceMode);
-    await new Promise(resolve => setTimeout(resolve, battleResultDisplayMs));
-    battlePanel.style.display = "none";
-  }
+  // Enable voting
+  battleStatusEl.textContent = "✨ Tap your favourite!";
+  dariaBattleSlot.classList.add("clickable");
+  danBattleSlot.classList.add("clickable");
 
-  battleInProgress = false;
-  isActionInProgress = false;
-  if(lastSignals && lastSignals.faceCount > 0 && firstComplimentShown){
-    battleBtn.style.display = "block";
-  }
+  const winner = await new Promise(resolve => {
+    voteResolver = resolve;
+    function onDariaVote(){ cleanup(); resolve("daria"); }
+    function onDanVote(){   cleanup(); resolve("dan"); }
+    function cleanup(){
+      dariaBattleSlot.removeEventListener("click", onDariaVote);
+      danBattleSlot.removeEventListener("click", onDanVote);
+      dariaBattleSlot.classList.remove("clickable");
+      danBattleSlot.classList.remove("clickable");
+      voteResolver = null;
+    }
+    dariaBattleSlot.addEventListener("click", onDariaVote, {once: true});
+    danBattleSlot.addEventListener("click", onDanVote, {once: true});
+  });
+
+  if(!winner || battleStopRequested){ return; } // stop was pressed; endBattle already called
+
+  // Celebrate!
+  triggerGlitter();
+  battleStatusEl.textContent = "🎉 Great choice!";
+  battleResult.textContent = "Great choice! You have excellent taste! 🎉";
+  battleResult.style.display = "block";
+  await speakWithMode("Great choice! You have excellent taste!", currentVoiceMode);
+  await new Promise(r => setTimeout(r, 1500));
+  endBattle();
 }
 
 function initBattleBtn(){
@@ -890,15 +946,8 @@ function initBattleBtn(){
 
   stopBtn.addEventListener("click", () => {
     battleStopRequested = true;
-    isActionInProgress = false;
     if(window.speechSynthesis) window.speechSynthesis.cancel();
-    const battlePanel = document.getElementById("battlePanel");
-    if(battlePanel) battlePanel.style.display = "none";
-    battleInProgress = false;
-    const battleBtn = document.getElementById("battleBtn");
-    if(battleBtn && lastSignals && lastSignals.faceCount > 0 && firstComplimentShown){
-      battleBtn.style.display = "block";
-    }
+    endBattle();
   });
 }
 
