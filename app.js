@@ -260,7 +260,6 @@ const dariaRepo = {
   centered: [
     "You know how to own a frame. Glitter would just be extra.",
     "You were made for this shot. ",
-    "Centred and glowing.",
     "Nailed it.",
   ],
   lighting: [
