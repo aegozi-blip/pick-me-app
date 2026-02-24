@@ -45,6 +45,13 @@ let lastDisplayedConfidence = -1;
 let lastDisplayedHint = "";
 let loopInterval = null;
 let lastSignals = null; // cache last detection result for button handler
+let battleInProgress = false;
+let battleStopRequested = false;
+
+// Battle timing constants
+const battleTurnDelayMs = 500;
+const battleRoundDelayMs = 900;
+const battleResultDisplayMs = 2500;
 
 // ---------- Helpers ----------
 function clamp01(x){ return Math.max(0, Math.min(1, x)); }
@@ -60,7 +67,10 @@ function initVoiceSelector(){
   const sel = document.getElementById("voiceSelector");
   if(!sel) return;
   sel.addEventListener("change", () => {
+    if(window.speechSynthesis) window.speechSynthesis.cancel();
     currentVoiceMode = sel.value;
+    console.log("[pick-me] voice mode →", currentVoiceMode,
+      "| male:", selectedMaleVoice?.name, "| female:", selectedFemaleVoice?.name);
   });
 }
 
@@ -749,8 +759,126 @@ function initMoreComplimentsBtn(){
 
 function updateMoreComplimentsBtn(faceCount){
   const btn = document.getElementById("moreComplimentsBtn");
-  if(!btn) return;
-  btn.style.display = (firstComplimentShown && faceCount > 0) ? "block" : "none";
+  const battleBtn = document.getElementById("battleBtn");
+  const visible = firstComplimentShown && faceCount > 0;
+  if(btn) btn.style.display = visible ? "block" : "none";
+  if(battleBtn && !battleInProgress) battleBtn.style.display = visible ? "block" : "none";
+}
+
+// ---------- Compliment Battle ----------
+function speakWithMode(text, mode){
+  return new Promise(resolve => {
+    if(!window.speechSynthesis){ resolve(); return; }
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "en-US";
+    u.rate = 1.02;
+    u.pitch = 1.06;
+    const voice = mode === "dan" ? selectedMaleVoice : selectedFemaleVoice;
+    if(voice) u.voice = voice;
+    u.onend = resolve;
+    u.onerror = resolve;
+    window.speechSynthesis.speak(u);
+  });
+}
+
+function getBattleCompliment(mode, signals){
+  const transitions = { becameCouple: false, becameGroup: false };
+  return mode === "dan"
+    ? makeComplimentDan(signals, transitions)
+    : makeComplimentDaria(signals, transitions);
+}
+
+async function runBattle(){
+  if(!lastSignals || lastSignals.faceCount === 0) return;
+
+  const battlePanel   = document.getElementById("battlePanel");
+  const battleBtn     = document.getElementById("battleBtn");
+  const battleRoundEl = document.getElementById("battleRound");
+  const dariaBattleText = document.getElementById("dariaBattleText");
+  const danBattleText   = document.getElementById("danBattleText");
+  const dariaBattleSlot = document.getElementById("dariaBattleSlot");
+  const danBattleSlot   = document.getElementById("danBattleSlot");
+  const battleResult    = document.getElementById("battleResult");
+
+  battleInProgress = true;
+  battleStopRequested = false;
+  battlePanel.style.display = "block";
+  battleBtn.style.display = "none";
+  battleResult.style.display = "none";
+  dariaBattleText.textContent = "…";
+  danBattleText.textContent = "…";
+
+  const rounds = 3;
+  for(let r = 1; r <= rounds; r++){
+    if(battleStopRequested) break;
+
+    battleRoundEl.textContent = `Round ${r} of ${rounds}`;
+    dariaBattleSlot.classList.remove("active");
+    danBattleSlot.classList.remove("active");
+
+    // Daria's turn
+    dariaBattleSlot.classList.add("active");
+    const dariaText = getBattleCompliment("daria", lastSignals);
+    dariaBattleText.textContent = dariaText;
+    await speakWithMode(dariaText, "daria");
+    if(battleStopRequested) break;
+
+    await new Promise(resolve => setTimeout(resolve, battleTurnDelayMs));
+    if(battleStopRequested) break;
+
+    // Dan's turn
+    dariaBattleSlot.classList.remove("active");
+    danBattleSlot.classList.add("active");
+    const danText = getBattleCompliment("dan", lastSignals);
+    danBattleText.textContent = danText;
+    await speakWithMode(danText, "dan");
+    if(battleStopRequested) break;
+
+    if(r < rounds){
+      danBattleSlot.classList.remove("active");
+      await new Promise(resolve => setTimeout(resolve, battleRoundDelayMs));
+    }
+  }
+
+  dariaBattleSlot.classList.remove("active");
+  danBattleSlot.classList.remove("active");
+
+  if(!battleStopRequested){
+    battleRoundEl.textContent = "Battle Complete! 🎉";
+    battleResult.textContent = "It's a tie! You're awesome either way! 🎉";
+    battleResult.style.display = "block";
+    await speakWithMode("It's a tie! You are awesome either way!", currentVoiceMode);
+    await new Promise(resolve => setTimeout(resolve, battleResultDisplayMs));
+    battlePanel.style.display = "none";
+  }
+
+  battleInProgress = false;
+  if(lastSignals && lastSignals.faceCount > 0 && firstComplimentShown){
+    battleBtn.style.display = "block";
+  }
+}
+
+function initBattleBtn(){
+  const btn     = document.getElementById("battleBtn");
+  const stopBtn = document.getElementById("stopBattleBtn");
+  if(!btn || !stopBtn) return;
+
+  btn.addEventListener("click", () => {
+    if(!battleInProgress) runBattle();
+  });
+
+  stopBtn.addEventListener("click", () => {
+    battleStopRequested = true;
+    if(window.speechSynthesis) window.speechSynthesis.cancel();
+    const battlePanel = document.getElementById("battlePanel");
+    if(battlePanel) battlePanel.style.display = "none";
+    battleInProgress = false;
+    const battleBtn = document.getElementById("battleBtn");
+    if(battleBtn && lastSignals && lastSignals.faceCount > 0 && firstComplimentShown){
+      battleBtn.style.display = "block";
+    }
+  });
 }
 
 
@@ -968,6 +1096,7 @@ async function boot(){
   initVoiceSelector();
   initMicButton();
   initMoreComplimentsBtn();
+  initBattleBtn();
 
   try{
     await loadModels();
