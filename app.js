@@ -1,75 +1,82 @@
-// app.js - Improved version with various enhancements
+// app.js
 
-// Reusable Brightness Canvas
-const createBrightnessCanvas = () => {
-    const canvas = document.createElement('canvas');
-    canvas.width = 640;
-    canvas.height = 480;
-    // Additional canvas setup here
-    return canvas;
+const complimentSet = {
+    happy: ["You're doing great! Keep it up!", "Your positivity is infectious!"],
+    sad: ["It's okay to feel down sometimes. You're strong!", "Remember, every day might not be good, but there's something good in every day!"],
+    motivated: ["You are capable of achieving amazing things!", "Your hard work will pay off!"],
+    // Add more conditions as needed
 };
 
-// Cached DOM Updates
-const cachedElements = {};
-const cacheDOMElements = () => {
-    cachedElements.complimentDisplay = document.getElementById('compliment');
-    // Cache other elements as needed
-};
+function generateCompliment(condition) {
+    const compliments = complimentSet[condition] || [];
+    return compliments.length ? compliments[Math.floor(Math.random() * compliments.length)] : "You're doing your best!";
+}
 
-// Context-Aware Compliments
-const generateCompliment = (context) => {
-    switch(context) {
-        case 'solo': return 'You are doing great!';
-        case 'couple': return 'Together you make a wonderful team!';
-        case 'group': return 'Look at how well you all work together!';
-        default: return 'Keep it up!';
+const barFill = document.getElementById('barFill');
+function updateConfidenceMeter(confPct) {
+    if (confPct >= 70) {
+        barFill.classList.add('high-confidence');
+    } else {
+        barFill.classList.remove('high-confidence');
     }
-};
-
-// Confidence Animation Effects
-const highConfidenceClass = 'high-confidence';
-const milestoneClass = 'milestone';
-const applyConfidenceEffects = (confidence) => {
-    if (confidence > 0.8) {
-        cachedElements.complimentDisplay.classList.add(highConfidenceClass);
+    if (confPct === 100) {
+        barFill.classList.add('milestone');
+        speechSynthesis.speak(new SpeechSynthesisUtterance("Congratulations! You did it!"));
+    } else {
+        barFill.classList.remove('milestone');
     }
-    if (confidence > 0.9) {
-        cachedElements.complimentDisplay.classList.add(milestoneClass);
+}
+
+let brightnessCanvas;
+function estimateBrightness() {
+    if (!brightnessCanvas) {
+        brightnessCanvas = document.createElement('canvas');
     }
-};
+    // Existing logic to estimate brightness
+times
+}
 
-// Improved Error Handling for Camera Setup
-const setupCamera = async () => {
-    try {
-        // Camera setup logic here, handle errors appropriately
-    } catch (error) {
-        console.error('Camera setup failed:', error);
-        // Handle error feedback to users
+let lastDisplayedConfidence = null;
+let lastDisplayedHint = null;
+function updateDOM(confPct, hint) {
+    if (lastDisplayedConfidence !== confPct) {
+        document.getElementById('confidenceDisplay').innerText = confPct;
+        lastDisplayedConfidence = confPct;
     }
-};
+    if (lastDisplayedHint !== hint) {
+        document.getElementById('hintDisplay').innerText = hint;
+        lastDisplayedHint = hint;
+    }
+}
 
-// Increased Detection Threshold
-const detectionThreshold = 0.65;
+function setupCamera() {
+    navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => {
+            // Start camera stream
+        })
+        .catch(error => {
+            if (error.name === "NotAllowedError") {
+                alert("Camera access was denied. Please allow access to use this feature.");
+            } else if (error.name === "NotFoundError") {
+                alert("No camera found. Please connect a camera and try again.");
+            }
+        });
+}
 
-// Cleanup Function for Page Unload
-const cleanUp = () => {
-    // Perform any necessary cleanup, remove event listeners, etc.
-};
+window.addEventListener('beforeunload', () => {
+    clearInterval(/* your interval reference */);
+    // Stop camera tracks
+    const stream = /* your video stream reference */;
+    stream.getTracks().forEach(track => track.stop());
+});
 
-// Increased Loop Interval
-const loopInterval = 300;
-const startDetectionLoop = () => {
-    setInterval(() => {
-        // Detection logic here
-    }, loopInterval);
-};
+const scoreThreshold = 0.65; // Increased for more accurate detection
 
-// Initialize application
-const init = () => {
-    cacheDOMElements();
-    setupCamera();
-    startDetectionLoop();
-    window.addEventListener('unload', cleanUp);
-};
-
-init();
+let detectionInFlight = false;
+setInterval(() => {
+    if (!detectionInFlight) {
+        detectionInFlight = true;
+        // Detection logic
+        detectionInFlight = false;
+    }
+}, 300); // Increased interval during detection
