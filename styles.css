@@ -1,35 +1,23 @@
-.confidence-meter {
-  transition: all 0.5s ease;
-  position: relative;
+.barFill {
+  transition: width 0.3s ease-out;
 }
 
-.confidence-meter.high-confidence {
-  background: linear-gradient(135deg, #0d6efd, #007bff);
-  animation: pulse-glow 1.5s infinite;
+/* High confidence effect (70%+) */
+.barFill.high-confidence {
+  background: linear-gradient(90deg, rgba(100, 200, 255, 0.8), rgba(200, 255, 255, 1));
+  animation: pulse-glow 1.5s ease-in-out infinite;
+}
+
+/* Milestone effect (100%) */
+.barFill.milestone {
+  animation: pulse-glow 0.5s ease-out;
 }
 
 @keyframes pulse-glow {
-  0%, 100% {
-    box-shadow: 0 0 10px rgba(0, 110, 255, 0);
+  0%, 100% { 
+    box-shadow: 0 0 5px rgba(100, 200, 255, 0.5);
   }
-  50% {
-    box-shadow: 0 0 20px rgba(0, 110, 255, 1);
-  }
-}
-
-.barFill {
-  transition: width 0.5s ease;
-}
-
-.milestone {
-  animation: milestone-animation 0.5s ease-in-out;
-}
-
-@keyframes milestone-animation {
-  from {
-    transform: scale(1);
-  }
-  to {
-    transform: scale(1.05);
+  50% { 
+    box-shadow: 0 0 15px rgba(100, 200, 255, 0.9);
   }
 }
