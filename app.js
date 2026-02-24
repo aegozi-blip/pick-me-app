@@ -1,4 +1,4 @@
-// pick-me-app v7
+// pick-me-app v8
 // IMPROVEMENTS:
 // - Confidence meter animations and milestone effects
 // - Fixed memory leak on page unload
@@ -6,6 +6,9 @@
 // - Cached brightness canvas for performance
 // - Better error messages for camera/permissions
 // - Caching DOM updates for performance
+// - Dual voice modes: Daria (sparkle) & Dan (drinks)
+// - Improved face detection thresholds
+// - Glitter animation support
 
 const video = document.getElementById("video");
 const canvas = document.getElementById("overlay");
@@ -18,6 +21,7 @@ const confidenceHint = document.getElementById("confidenceHint");
 
 let selectedVoice = null;
 let voices = [];
+let currentVoiceMode = "daria"; // "daria" or "dan"
 
 // Cadence
 let lastSpokenAt = 0;
@@ -45,6 +49,15 @@ function joinNicely(items){
   if(items.length === 1) return items[0];
   if(items.length === 2) return `${items[0]} and ${items[1]}`;
   return `${items.slice(0,-1).join(", ")}, and ${items[items.length-1]}`;
+}
+
+// ---------- Voice mode selector ----------
+function initVoiceSelector(){
+  const sel = document.getElementById("voiceSelector");
+  if(!sel) return;
+  sel.addEventListener("change", () => {
+    currentVoiceMode = sel.value;
+  });
 }
 
 // ---------- Voice: pick best available automatically ----------
@@ -162,6 +175,192 @@ function computeConfidence({faceCount, smileCount, brightness, centered, close})
   if(faceCount === 2 && close) score += 0.10;
   if(faceCount >= 3) score += 0.06;
   return Math.round(clamp01(score) * 100);
+}
+
+// ---------- Daria Mode Compliments (sparkle & glitter themed) ----------
+function makeComplimentDaria(signals, transitions){
+  const { faceCount, smileCount, brightness, centered, close } = signals;
+  if(faceCount === 0) return "";
+
+  function meetsConditions(conditions) {
+    if(conditions.minSmile && smileCount === 0) return false;
+    if(conditions.centered && !centered) return false;
+    if(conditions.brightLight && brightness <= 0.62) return false;
+    if(conditions.dimLight && brightness >= 0.35) return false;
+    if(conditions.duoClose && !(faceCount === 2 && close)) return false;
+    return true;
+  }
+
+  const soloCompliments = [
+    { conditions: { minSmile: true, centered: true, brightLight: true },
+      text: "Absolutely sparkling ✨ — that smile with perfect lighting is pure glitter magic." },
+    { conditions: { minSmile: true, centered: true },
+      text: "Centered, smiling, and absolutely glittering. You're the main event." },
+    { conditions: { minSmile: true, brightLight: true },
+      text: "That smile in this light? Straight-up sparkle energy." },
+    { conditions: { minSmile: true },
+      text: "Your smile is throwing glitter into the universe right now." },
+    { conditions: { centered: true, brightLight: true },
+      text: "Perfectly framed and glowing like a disco ball in the best way. ✨" },
+    { conditions: { centered: true },
+      text: "You know how to own a frame. Glitter would just be extra." },
+    { conditions: { brightLight: true },
+      text: "The light is catching every sparkle on you right now." },
+    { conditions: { dimLight: true },
+      text: "Mysterious, moody, and somehow still shimmering. Very you." },
+    { conditions: {},
+      text: "Okay. Pure sparkle. The frame literally can't handle it." },
+    { conditions: {},
+      text: "You arrived and the glitter followed. Obviously." },
+    { conditions: {},
+      text: "Main character. Confetti cannon optional but assumed. ✨" }
+  ];
+
+  const couple = [
+    { conditions: { duoClose: true, minSmile: true },
+      text: "Two smiles, one sparkle moment. You two are dangerously glittery. ✨" },
+    { conditions: { duoClose: true },
+      text: "That duo energy is sparkling together — dangerously synced." },
+    { conditions: { minSmile: true },
+      text: "A smiling duo dripping in glitter vibes? This is officially iconic." },
+    { conditions: {},
+      text: "Two of you? The glitter is doubling. This just got fun. ✨" },
+    { conditions: {},
+      text: "You two look like a sparkle plot twist." },
+    { conditions: {},
+      text: "Double glitter trouble. Absolutely stylish." }
+  ];
+
+  const group = [
+    { conditions: { minSmile: true, centered: true },
+      text: "This group understood the assignment — centered, smiling, and positively sparkling. ✨" },
+    { conditions: { minSmile: true },
+      text: "All those smiles? The glitter is off the charts right now." },
+    { conditions: { centered: true },
+      text: "Perfectly framed group, every single one of you sparkling." },
+    { conditions: {},
+      text: "Full sparkle mode — everyone in this group understood the assignment. ✨" },
+    { conditions: {},
+      text: "The glitter energy in this group is genuinely outrageous." },
+    { conditions: {},
+      text: "This looks like the glittery bit of the night everyone's here for." }
+  ];
+
+  if(transitions.becameCouple){
+    return pick(["Oh hello — duo mode! Double the sparkle. 🌟", "Second face entered the glitter chat.", "Couple mode. The confetti is ready. ✨"]);
+  }
+  if(transitions.becameGroup){
+    return pick(["Okay wow — full sparkle group mode. ✨", "Three+ faces? The glitter just multiplied.", "Group shot. This is going to shimmer in the memory. 🌟"]);
+  }
+
+  const smileTag = (smileCount > 0)
+    ? pick([" That smile is pure sparkle.", " Smile detected — glitter incoming. ✨", " That smile? Weaponised glitter."])
+    : "";
+
+  let complimentSet = [];
+  if(faceCount === 1) complimentSet = soloCompliments;
+  else if(faceCount === 2) complimentSet = couple;
+  else complimentSet = group;
+
+  const filtered = complimentSet.filter(c => meetsConditions(c.conditions));
+  const base = filtered.length > 0
+    ? pick(filtered).text
+    : pick(complimentSet.filter(c => Object.keys(c.conditions).length === 0)).text;
+
+  return base + smileTag;
+}
+
+// ---------- Dan Mode Compliments (Wednesday drinks & gin & tonics themed) ----------
+function makeComplimentDan(signals, transitions){
+  const { faceCount, smileCount, brightness, centered, close } = signals;
+  if(faceCount === 0) return "";
+
+  function meetsConditions(conditions) {
+    if(conditions.minSmile && smileCount === 0) return false;
+    if(conditions.centered && !centered) return false;
+    if(conditions.brightLight && brightness <= 0.62) return false;
+    if(conditions.dimLight && brightness >= 0.35) return false;
+    if(conditions.duoClose && !(faceCount === 2 && close)) return false;
+    return true;
+  }
+
+  const soloCompliments = [
+    { conditions: { minSmile: true, centered: true, brightLight: true },
+      text: "That smile, that lighting, that energy — this is mid-week G&T at its finest. 🍹" },
+    { conditions: { minSmile: true, centered: true },
+      text: "Centered and smiling on a Wednesday? Gin & tonic says you're doing brilliantly." },
+    { conditions: { minSmile: true, brightLight: true },
+      text: "That smile in that light? Someone's had a good Wednesday already." },
+    { conditions: { minSmile: true },
+      text: "That's the smile of someone who earned their Wednesday G&T." },
+    { conditions: { centered: true, brightLight: true },
+      text: "Perfectly framed for a Wednesday. The gin & tonic is on the way. 🍸" },
+    { conditions: { centered: true },
+      text: "That framing is exactly the kind of energy needed for mid-week drinks." },
+    { conditions: { brightLight: true },
+      text: "Looking bright on a Wednesday — the G&T is working wonders." },
+    { conditions: { dimLight: true },
+      text: "Moody bar lighting? That's just the Wednesday evening atmosphere right there." },
+    { conditions: {},
+      text: "Wednesday vibes and gin & tonics? You've got this absolutely sorted. 🍹" },
+    { conditions: {},
+      text: "You look like you could convincingly order the whole drinks menu on a Wednesday." },
+    { conditions: {},
+      text: "Mid-week. Full charm. G&T in hand (probably). Unbeatable combo." }
+  ];
+
+  const couple = [
+    { conditions: { duoClose: true, minSmile: true },
+      text: "Two smiling faces at Wednesday drinks? This G&T round is legendary. 🍹" },
+    { conditions: { duoClose: true },
+      text: "That duo energy at mid-week drinks is dangerously good." },
+    { conditions: { minSmile: true },
+      text: "A smiling duo on a Wednesday? The gin & tonics are clearly doing their job." },
+    { conditions: {},
+      text: "Wednesday drinks duo — now it's officially a session. 🍸" },
+    { conditions: {},
+      text: "You two look like you've found the best table on a Wednesday night." },
+    { conditions: {},
+      text: "Double trouble, but make it Wednesday gin & tonics. Stylish." }
+  ];
+
+  const group = [
+    { conditions: { minSmile: true, centered: true },
+      text: "Group, smiling, centered — this Wednesday drinks crew understood the assignment. 🍹" },
+    { conditions: { minSmile: true },
+      text: "All those smiles on a Wednesday? The G&T round is going around." },
+    { conditions: { centered: true },
+      text: "Perfectly framed group for a mid-week session. Everyone's in on it." },
+    { conditions: {},
+      text: "Wednesday drinks group? Everyone in this shot is absolutely iconic. 🍸" },
+    { conditions: {},
+      text: "The mid-week gin & tonic energy in this group is outrageous." },
+    { conditions: {},
+      text: "This looks like the Wednesday session everyone was invited to. Lucky them." }
+  ];
+
+  if(transitions.becameCouple){
+    return pick(["Oh hello — Wednesday duo mode. G&T for two? 🍹", "Second face. Now it's a proper Wednesday session.", "Couple mode activated. Someone call the bartender."]);
+  }
+  if(transitions.becameGroup){
+    return pick(["Okay wow — full Wednesday group mode. 🍹", "Three+ faces? The gin & tonic round just got bigger.", "Group Wednesday drinks? Yeah. This is the one."]);
+  }
+
+  const smileTag = (smileCount > 0)
+    ? pick([" That smile says the G&T hit right.", " Smile detected — cheers! 🥂", " That smile? Gin & tonic approved."])
+    : "";
+
+  let complimentSet = [];
+  if(faceCount === 1) complimentSet = soloCompliments;
+  else if(faceCount === 2) complimentSet = couple;
+  else complimentSet = group;
+
+  const filtered = complimentSet.filter(c => meetsConditions(c.conditions));
+  const base = filtered.length > 0
+    ? pick(filtered).text
+    : pick(complimentSet.filter(c => Object.keys(c.conditions).length === 0)).text;
+
+  return base + smileTag;
 }
 
 // ---------- Improved Compliments (CONDITION-BASED) ----------
@@ -425,28 +624,33 @@ async function detectOnce(){
   if(!modelsLoaded) return null;
   if(video.readyState < 2) return null;
 
-  const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.65 });
-  const detections = await faceapi.detectAllFaces(video, options).withFaceExpressions();
+  try {
+    const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.50 }); // lowered from 0.65 for better recognition
+    const detections = await faceapi.detectAllFaces(video, options).withFaceExpressions();
 
-  const w = video.videoWidth || 1;
-  const h = video.videoHeight || 1;
+    const w = video.videoWidth || 1;
+    const h = video.videoHeight || 1;
 
-  const normBoxes = detections.map(d => {
-    const b = d.detection.box;
-    return { x: b.x / w, y: b.y / h, w: b.width / w, h: b.height / h };
-  });
+    const normBoxes = detections.map(d => {
+      const b = d.detection.box;
+      return { x: b.x / w, y: b.y / h, w: b.width / w, h: b.height / h };
+    });
 
-  let smileCount = 0;
-  for(const d of detections){
-    const happy = d.expressions?.happy ?? 0;
-    if(happy > 0.6) smileCount += 1;
+    let smileCount = 0;
+    for(const d of detections){
+      const happy = d.expressions?.happy ?? 0;
+      if(happy > 0.5) smileCount += 1; // lowered from 0.6 for better smile detection
+    }
+
+    const brightness = estimateBrightness();
+    const centered = facesCentered(normBoxes);
+    const close = facesCloseTogether(normBoxes);
+
+    return { faceCount: detections.length, smileCount, brightness, centered, close };
+  } catch(e) {
+    console.error("Detection error:", e);
+    return null;
   }
-
-  const brightness = estimateBrightness();
-  const centered = facesCentered(normBoxes);
-  const close = facesCloseTogether(normBoxes);
-
-  return { faceCount: detections.length, smileCount, brightness, centered, close };
 }
 
 function onNoFaces(){
@@ -493,7 +697,9 @@ async function loop(){
     };
 
     if(shouldGenerateCompliment(signals)){ 
-      const text = makeCompliment(signals, transitions);
+      const text = currentVoiceMode === "dan"
+        ? makeComplimentDan(signals, transitions)
+        : makeComplimentDaria(signals, transitions);
       if(text){
         complimentEl.textContent = text;
         lastComplimentAt = Date.now();
@@ -531,6 +737,7 @@ async function boot(){
   }
 
   initVoice();
+  initVoiceSelector();
 
   try{
     await loadModels();
