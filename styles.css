@@ -1,23 +1,55 @@
-.barFill {
-  transition: width 0.3s ease-out;
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background-color: #f0f0f0;
 }
 
-/* High confidence effect (70%+) */
-.barFill.high-confidence {
-  background: linear-gradient(90deg, rgba(100, 200, 255, 0.8), rgba(200, 255, 255, 1));
-  animation: pulse-glow 1.5s ease-in-out infinite;
+.confidence-meter {
+  position: relative;
+  width: 200px;
+  height: 30px;
+  border-radius: 15px;
+  background-color: #ddd;
+  overflow: hidden;
 }
 
-/* Milestone effect (100%) */
-.barFill.milestone {
-  animation: pulse-glow 0.5s ease-out;
+.bar {
+  position: absolute;
+  height: 100%;
+  border-radius: 15px;
+  background-color: #4caf50;
+  animation: bar-fill-high 1s forwards;
 }
 
 @keyframes pulse-glow {
-  0%, 100% { 
-    box-shadow: 0 0 5px rgba(100, 200, 255, 0.5);
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(76, 175, 80, 0.7);
   }
-  50% { 
-    box-shadow: 0 0 15px rgba(100, 200, 255, 0.9);
+  50% {
+    box-shadow: 0 0 20px rgba(76, 175, 80, 1);
+  }
+}
+
+@keyframes bar-fill-high {
+  from {
+    width: 0;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+@keyframes bar-milestone {
+  0% {
+    background-color: #4caf50;
+  }
+  50% {
+    background-color: #ffeb3b;
+  }
+  100% {
+    background-color: #f44336;
   }
 }
